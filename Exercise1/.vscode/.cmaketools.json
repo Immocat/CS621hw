@@ -1,0 +1,78 @@
+{
+  "variant": {
+    "label": "Release",
+    "keywordSettings": {
+      "buildType": "release"
+    },
+    "description": "Enable optimizations, omit debug info"
+  },
+  "activeEnvironments": [],
+  "codeModel": {
+    "configurations": [
+      {
+        "name": "Release",
+        "projects": [
+          {
+            "buildDirectory": "/home/immocat/Documents/cs621/Exercise1/build",
+            "name": "Exercise1",
+            "sourceDirectory": "/home/immocat/Documents/cs621/Exercise1",
+            "targets": [
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/Exercise1/bin/exercise1"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/Exercise1/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "GlutExaminer.hh",
+                      "GlutViewer.hh",
+                      "MeshViewer.hh",
+                      "ValenceViewer.hh",
+                      "gl.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/OpenMesh/src"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "GlutExaminer.cc",
+                      "GlutViewer.cc",
+                      "MeshViewer.cc",
+                      "ValenceViewer.cc",
+                      "valenceview.cc"
+                    ]
+                  }
+                ],
+                "fullName": "exercise1",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/OpenMesh/lib/libOpenMeshCore.a /home/immocat/Documents/cs621/OpenMesh/lib/libOpenMeshTools.a",
+                "linkerLanguage": "CXX",
+                "name": "exercise1",
+                "sourceDirectory": "/home/immocat/Documents/cs621/Exercise1",
+                "type": "EXECUTABLE"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cookie": "0.5935888454414753",
+    "inReplyTo": "codemodel",
+    "type": "reply"
+  }
+}
