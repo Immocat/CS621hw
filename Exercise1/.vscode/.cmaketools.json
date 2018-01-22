@@ -1,27 +1,27 @@
 {
   "variant": {
-    "label": "Release",
+    "label": "RelWithDebInfo",
     "keywordSettings": {
-      "buildType": "release"
+      "buildType": "reldeb"
     },
-    "description": "Enable optimizations, omit debug info"
+    "description": "Perform optimizations AND include debugging information"
   },
   "activeEnvironments": [],
   "codeModel": {
     "configurations": [
       {
-        "name": "Release",
+        "name": "RelWithDebInfo",
         "projects": [
           {
-            "buildDirectory": "/home/immocat/Documents/cs621/Exercise1/build",
+            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise1/build",
             "name": "Exercise1",
-            "sourceDirectory": "/home/immocat/Documents/cs621/Exercise1",
+            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise1",
             "targets": [
               {
                 "artifacts": [
-                  "/home/immocat/Documents/cs621/Exercise1/bin/exercise1"
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise1/bin/exercise1"
                 ],
-                "buildDirectory": "/home/immocat/Documents/cs621/Exercise1/build",
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise1/build",
                 "fileGroups": [
                   {
                     "isGenerated": false,
@@ -34,7 +34,7 @@
                     ]
                   },
                   {
-                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "compileFlags": "-O2 -g -DNDEBUG  ",
                     "defines": [
                       "_USE_MATH_DEFINES"
                     ],
@@ -43,7 +43,7 @@
                         "path": "/usr/local/include"
                       },
                       {
-                        "path": "/home/immocat/Documents/cs621/OpenMesh/src"
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
                       }
                     ],
                     "isGenerated": false,
@@ -59,11 +59,11 @@
                 ],
                 "fullName": "exercise1",
                 "linkFlags": "-rdynamic",
-                "linkLanguageFlags": "-O3 -DNDEBUG",
-                "linkLibraries": "-Wl,-rpath,/usr/local/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/OpenMesh/lib/libOpenMeshCore.a /home/immocat/Documents/cs621/OpenMesh/lib/libOpenMeshTools.a",
+                "linkLanguageFlags": "-O2 -g -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so",
                 "linkerLanguage": "CXX",
                 "name": "exercise1",
-                "sourceDirectory": "/home/immocat/Documents/cs621/Exercise1",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise1",
                 "type": "EXECUTABLE"
               }
             ]
@@ -71,7 +71,7 @@
         ]
       }
     ],
-    "cookie": "0.5935888454414753",
+    "cookie": "0.06596063948115427",
     "inReplyTo": "codemodel",
     "type": "reply"
   }
