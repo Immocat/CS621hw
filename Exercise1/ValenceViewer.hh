@@ -73,6 +73,11 @@ protected:
     /// set vertex color from vertex valence
     void color_coding();
 
+    // valence for each vertex
+    OpenMesh::VPropHandleT<int> valence_;
+
+    int max_valence_;
+
 private:
 
 };

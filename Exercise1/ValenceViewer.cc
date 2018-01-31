@@ -96,7 +96,17 @@ calc_valences()
     // (hint: use the Mesh::VertexIter iterator)
 
     // Implement something here
-
+    mesh_.add_property(valence_);
+    max_valence_ = 0;
+    for(Mesh::VertexIter v_it = mesh_.vertices_begin();v_it!=mesh_.vertices_end();++v_it){
+        //
+        int cur_valence = 0;
+        for(Mesh::VertexVertexIter vv_it = mesh_.vv_iter(*v_it);vv_it.is_valid();++vv_it){
+            ++cur_valence;
+        }
+        mesh_.property(valence_,*v_it) = cur_valence;
+        max_valence_ = (cur_valence > max_valence_ ? cur_valence : max_valence_);
+    }
     /////////////////////////////////////////////////////////////////////////////
 }
 
@@ -108,13 +118,23 @@ void
 ValenceViewer::
 color_coding()
 {
+    Mesh::Color colors[5] = {{128,187,79},
+                             {196,175,48},
+                             {229,165,57},
+                             {240,128,54},
+                             {247,119,70}};
+    
     // EXERCISE 1.3 /////////////////////////////////////////////////////////////
     // Implement a color visualization of your choice that shows the valence of
     // veach ertex of "mesh_". 
     // (hint: use Mesh::Color color type)
 
     // Implement something here
-
+    for(Mesh::VertexIter v_it = mesh_.vertices_begin();v_it != mesh_.vertices_end();++v_it){
+        int cur_valence = mesh_.property(valence_, *v_it);
+        int color_index = std::floor((float)cur_valence * 4 / (float)max_valence_);
+        mesh_.set_color(*v_it,colors[color_index]);
+    }
     /////////////////////////////////////////////////////////////////////////////
 }
 

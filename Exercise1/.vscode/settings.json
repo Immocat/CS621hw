@@ -2,6 +2,7 @@
     "files.associations": {
         "*.tcc": "cpp",
         "string_view": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "rope": "cpp"
     }
 }

@@ -9,7 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/exercise1",
-            "args": [],
+            "args": [
+                "/home/immocat/Documents/cs621/CS621hw/Exercise1/data/bunny.off"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
