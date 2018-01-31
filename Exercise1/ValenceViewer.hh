@@ -77,6 +77,7 @@ protected:
     OpenMesh::VPropHandleT<int> valence_;
 
     int max_valence_;
+    int min_valence_;
 
 private:
 

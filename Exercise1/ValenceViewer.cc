@@ -41,7 +41,7 @@
 #include "ValenceViewer.hh"
 #include <vector>
 #include <float.h>
-
+#include <limits>
 
 //== IMPLEMENTATION ========================================================== 
 
@@ -98,6 +98,7 @@ calc_valences()
     // Implement something here
     mesh_.add_property(valence_);
     max_valence_ = 0;
+    min_valence_ = std::numeric_limits<int>::max();
     for(Mesh::VertexIter v_it = mesh_.vertices_begin();v_it!=mesh_.vertices_end();++v_it){
         //
         int cur_valence = 0;
@@ -106,7 +107,9 @@ calc_valences()
         }
         mesh_.property(valence_,*v_it) = cur_valence;
         max_valence_ = (cur_valence > max_valence_ ? cur_valence : max_valence_);
+        min_valence_ = (cur_valence < min_valence_ ? cur_valence : min_valence_);
     }
+    printf("max valence: %d, min valence: %d\n",max_valence_, min_valence_);
     /////////////////////////////////////////////////////////////////////////////
 }
 
@@ -132,7 +135,7 @@ color_coding()
     // Implement something here
     for(Mesh::VertexIter v_it = mesh_.vertices_begin();v_it != mesh_.vertices_end();++v_it){
         int cur_valence = mesh_.property(valence_, *v_it);
-        int color_index = std::floor((float)cur_valence * 4 / (float)max_valence_);
+        int color_index = std::floor((float)(cur_valence-min_valence_) * 4 / (float)(max_valence_-min_valence_));
         mesh_.set_color(*v_it,colors[color_index]);
     }
     /////////////////////////////////////////////////////////////////////////////
