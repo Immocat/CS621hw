@@ -57,7 +57,7 @@ Transformation Registration::register_point2point(
     double * A = new double[numRows * 6];
     double * b = new double[numRows];
     memset(A,0,sizeof(double)*numRows*6);
-    memset(b,0,sizeof(double)*numRows*0);
+    memset(b,0,sizeof(double)*numRows);
 
     for(int i = 0; i < (int) _src.size(); i++)
     {
@@ -66,7 +66,21 @@ Transformation Registration::register_point2point(
         // set up matrix A and b with the linear constraints
 
         ////////////////////////////////////////////////////////////////////////////
+        A[i*3*6+1] = _src[i].v[2];//Piz
+        A[i*3*6+2] = -(_src[i].v[1]);//-Piy
+        A[i*3*6+3] = (double)1;
 
+        A[(i*3+1)*6] = -(_src[i].v[2]);//-Piz
+        A[(i*3+1)*6+2] = _src[i].v[0];//Pix
+        A[(i*3+1)*6+4] = (double)1;
+
+        A[(i*3+2)*6] = _src[i].v[1];//Piy
+        A[(i*3+2)*6+1] = -(_src[i].v[0]);//-Pix
+        A[(i*3+2)*6+5] = (double)1;//-Pix
+
+        b[i*3] = _target[i].v[0] - _src[i].v[0];
+        b[i*3+1] = _target[i].v[1] - _src[i].v[1];
+        b[i*3+2] = _target[i].v[2] - _src[i].v[2];
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -113,7 +127,7 @@ Transformation Registration::register_point2surface(
     double * A = new double[numRows * 6];
     double * b = new double[numRows];
     memset(A,0,sizeof(double)*numRows*6);
-    memset(b,0,sizeof(double)*numRows*0);
+    memset(b,0,sizeof(double)*numRows);
 
     for(int i = 0; i < (int) _src.size(); i++)
     {
@@ -122,8 +136,15 @@ Transformation Registration::register_point2surface(
         // set up matrix A and b with the linear constraints
 
         ////////////////////////////////////////////////////////////////////////////
+        Vector3d pi_x_ni = cross_product(_src[i], _target_normals[i]);
+        A[i*6] = pi_x_ni.v[0];
+        A[i*6+1] = pi_x_ni.v[1];
+        A[i*6+2] = pi_x_ni.v[2];
+        A[i*6+3] = _target_normals[i].v[0];
+        A[i*6+4] = _target_normals[i].v[1];
+        A[i*6+5] = _target_normals[i].v[2];
 
-
+        b[i] = -(dot_product(_src[i] - _target[i],_target_normals[i]));
         ////////////////////////////////////////////////////////////////////////////
     }
 

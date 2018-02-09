@@ -47,10 +47,58 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-
-
+#include <cstdlib>
+#include <unordered_set>
+#include <algorithm>
 //== IMPLEMENTATION ==========================================================
+template <typename Elem>
+class randomaccesstable
+{
+public:
+	randomaccesstable(std::size_t initial_size)
+		: data_(initial_size), count_(0)
+	{ }
 
+	inline randomaccesstable &push_back(const Elem &elem)
+	{
+		if (count_ < data_.size())
+			data_[count_++] = elem;
+		else {
+			data_.push_back(elem);
+			++count_;
+		}
+		return *this;
+	}
+
+	inline randomaccesstable &remove(const std::size_t index)
+	{
+		if (index < count_)
+		{
+			std::swap(data_[index], data_[count_ - 1]);
+			--count_;
+		}
+		return *this;
+	}
+
+	inline const Elem &operator[](const std::size_t index) const
+	{
+		return data_[index];
+	}
+
+	inline Elem &operator[](const std::size_t index)
+	{
+		return data_[index];
+	}
+
+	inline std::size_t size() const
+	{
+		return count_;
+	}
+
+public:
+	std::vector<Elem>  data_;
+	std::size_t        count_;
+};
 
 RegistrationViewer::
 RegistrationViewer(const char* _title, int _width, int _height)
@@ -612,9 +660,14 @@ perform_registration(bool _tangential_motion)
     // set transformation
     transformations_[currIndex_] = opt_tr * transformations_[currIndex_];
 }
-
+static bool sample_valid(const Vector3d &p,const std::vector<int>& ids,const std::vector< Vector3d > & _pts,float len2){
+    for(int j = 0; j < ids.size(); ++j){
+        if(length2(p - _pts[ids[j]]) < len2)
+            return false;
+    }
+    return true;
+}
 //=============================================================================
-
 /// subsample points
 std::vector<int> RegistrationViewer::subsample( const std::vector< Vector3d > & _pts )
 {
@@ -628,13 +681,80 @@ std::vector<int> RegistrationViewer::subsample( const std::vector< Vector3d > & 
     // (Hint: take advantage of the fact that consecutive points in the
     //  vector _pts are also often close in the scan )
     ////////////////////////////////////////////////////////////////////////////
+    // always add the first point...
+    // similar to poisson disk sampling, except that the surounding is choosed from nearby [-15,15] points
+    if(_pts.size() == 0){
+        printf("[ERROR] subsample : no source point to choose!\n");
+    }
+    else{
+        //suppose we need 1000 samples
+        float subsampleRadius2 = subsampleRadius * subsampleRadius;
+        int di = _pts.size() / 2000;
+        for(int i = 0; i < _pts.size();i+=di){
+            while(i < _pts.size()  && !sample_valid(_pts[i],indeces,_pts,subsampleRadius2))
+                ++i;
+            indeces.push_back(i);
+        }
 
+        // float subsampleRadius2 = subsampleRadius * subsampleRadius;
+        // std::unordered_set<int> indeces_set;
+        // while(indeces.size() < 1000){
+        //     int i = rand() % _pts.size();
+        //     if(indeces_set.find(i)!= indeces_set.end()) continue;
+        //     bool is_valid = true;
+        //     for(int j = 0; j < indeces.size(); ++j){
+        //         if(length2(_pts[i] - _pts[j]) < subsampleRadius2){
+        //             is_valid = false;
+        //             break;
+        //         }
+        //     }
+        //     if(!is_valid) continue;
+        //     // put in
+        //     indeces_set.insert(i);
+        //     indeces.push_back(i);
+        // }
+
+        // randomaccesstable<int> candidates(_pts.size());
+        // std::unordered_set<int> indeces_set;
+        // //1. random choose one, push it to ouput indeces and candidates
+        // int start_point_id = rand() % _pts.size();
+        // candidates.push_back(start_point_id);
+        // indeces.push_back(start_point_id);
+        // indeces_set.insert(start_point_id);
+        // while(candidates.size() > 0){
+        //     // randomly choose a point in candidate
+        //     int candidate = candidates[0];
+        //     candidates.remove(0);
+        //     int c_max = std::min(candidate + 15,(int)_pts.size());
+        //     // to keep it simple, generate  
+        //     for(int i = std::max(0,candidate-15); i < c_max;++i){
+        //         // new points should not be chosen before
+        //         if(indeces_set.find(i)!= indeces_set.end()) continue;
+        //         // new points should be farther than the threshold
+        //         if(length2(_pts[i] - _pts[candidate]) < subsampleRadius2) continue;
+        //         //
+        //         bool is_valid = true;
+        //         for(int j = 0; j < indeces.size(); ++j){
+        //             if(length2(_pts[i] - _pts[j]) < subsampleRadius2){
+        //                 is_valid = false;
+        //                 break;
+        //             }
+        //         }
+        //         if(!is_valid) continue;
+        //         // new point is valid, put it in
+        //         indeces_set.insert(i);
+        //         indeces.push_back(i);
+        //         candidates.push_back(i);
+        //     } 
+        // }
+
+    }
 
     ////////////////////////////////////////////////////////////////////////////
 
     // keep indeces/samples for display
     sampledPoints_ = indeces;
-
+    printf("subsample: choose %d samples\n",indeces.size());
     return indeces;
 }
 
@@ -655,6 +775,7 @@ void RegistrationViewer::calculate_correspondences(
     std::vector< Vector3d > srcCandidateNormals;
     std::vector< Vector3d > targetCandidatePts;
     std::vector< Vector3d > targetCandidateNormals;
+    std::vector< double > src_target_dis2;
 
     // get points on src mesh
     std::vector< Vector3d > srcPts = get_points( meshes_[currIndex_] );
@@ -700,10 +821,12 @@ void RegistrationViewer::calculate_correspondences(
                 srcCandidateNormals.push_back( srcNormals[index] );
                 targetCandidatePts.push_back( targetPts[bestIndex] );
                 targetCandidateNormals.push_back( targetNormals[bestIndex] );
+                src_target_dis2.push_back(length2(srcPts[index]-targetPts[bestIndex]));
             }
         }
     }
 
+    printf("calculate_correspondences: candidate num: %d\n",srcCandidatePts.size());
 
     // EXERCISE 2.3 /////////////////////////////////////////////////////////////
     // correspondence pruning:
@@ -719,8 +842,24 @@ void RegistrationViewer::calculate_correspondences(
     float distMedianThresh = 3;
 
     ////////////////////////////////////////////////////////////////////////////
+    std::vector<double> dis2_copy = src_target_dis2;
+    std::nth_element(src_target_dis2.begin(),
+                    src_target_dis2.begin() + src_target_dis2.size()/2,
+                    src_target_dis2.end());
+    double distThreshold = distMedianThresh * std::sqrt(std::max((double)0, src_target_dis2[src_target_dis2.size()/2]));
+    double distThreshold2 =  distThreshold * distThreshold;
+    double cosineThresh = std::cos(normalCompatabilityThresh*M_PI / 180.0);
+    for(int i = 0; i< srcCandidatePts.size(); ++i){
+        if(dis2_copy[i] > distThreshold2) continue;
+        //suppose distMedian is always less than 90 degree, which means that cosineThresh<=cos(theta)<=1
+        if(dot_product(srcCandidateNormals[i].normalize(),targetCandidateNormals[i].normalize()) < cosineThresh) continue;
+        //put into output
+        _src.push_back(srcCandidatePts[i]);
+        _target.push_back(targetCandidatePts[i]);
+        _target_normals.push_back(targetCandidateNormals[i]);
+    }
+    printf("calculate_correspondences: final num: %d\n",(int)_src.size());
 
-    
     ////////////////////////////////////////////////////////////////////////////
 
 }
