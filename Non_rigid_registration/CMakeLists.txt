@@ -1,4 +1,4 @@
-project(Exercise2)
+project(non_rigid)
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -16,6 +16,13 @@ include_directories(${GLUT_INCLUDE_DIR})
 if(NOT GLUT_FOUND)
     message(ERROR " GLUT not found")
 endif()
+
+
+#setup ceres solver
+include_directories(${EIGEN_INCLUDE_DIR}) #this line is very important and necesary
+find_package(Ceres REQUIRED)
+message("CERES_LIBRARIES = ${CERES_LIBRARIES}")
+
 
 # setup OpenGL
 find_package(OpenGL)
@@ -46,5 +53,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # compile and link
 add_library(ann ${ann_sources} ${ann_headers})
-add_executable(exercise2 ${all_sources} ${all_headers})
-target_link_libraries(exercise2 ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${OPENMESH_LIBRARIES} ann)
+add_executable(non_rigid ${all_sources} ${all_headers})
+target_link_libraries(non_rigid ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${OPENMESH_LIBRARIES} ann ${CERES_LIBRARIES})

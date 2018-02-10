@@ -41,35 +41,28 @@
 #include <vector>
 #include "Transformation.hh"
 
+// point-2-point and point-2-surface registration using linearized rotation
+// matrices
+class Registration {
+ public:
+  // point-2-point registration
+  Transformation register_point2point(const std::vector<Vector3d>& _src,
+                                      const std::vector<Vector3d>& _target);
 
-// point-2-point and point-2-surface registration using linearized rotation matrices
-class Registration
-{
-public:
+  // point-2-surface registration
+  Transformation register_point2surface(
+      const std::vector<Vector3d>& _src, const std::vector<Vector3d>& _target,
+      const std::vector<Vector3d>& _target_normals);
 
-    // point-2-point registration
-    Transformation register_point2point(
-        const std::vector< Vector3d > & _src,
-        const std::vector< Vector3d > & _target );
+ private:
+  // solve the linear system Ax = b with 6 unknowns
+  bool Solve(double* A, double* b, double x[6], int numRows);
 
-    // point-2-surface registration
-    Transformation register_point2surface(
-        const std::vector< Vector3d > & _src,
-        const std::vector< Vector3d > & _target,
-        const std::vector< Vector3d > & _target_normals );
+  // solves the linear equation AtA x = Atb using cholesky decomposition
+  bool CholeskySolve(double AtA[6][6], double Atb[6], double x[6]);
 
-private:
-
-    // solve the linear system Ax = b with 6 unknowns
-    bool Solve( double * A, double * b, double x[6], int numRows );
-
-    // solves the linear equation AtA x = Atb using cholesky decomposition
-    bool CholeskySolve(double AtA[6][6], double Atb[6], double x[6]);
-
-    // returns the rotation matrix for 3 rotation angles
-    Matrix3x3d GetRotation(double alpha, double beta, double gamma);
-
+  // returns the rotation matrix for 3 rotation angles
+  Matrix3x3d GetRotation(double alpha, double beta, double gamma);
 };
 
 #endif
-

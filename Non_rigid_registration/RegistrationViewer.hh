@@ -35,109 +35,91 @@
 //
 //=============================================================================
 
-
 #ifndef REGISTRATIONVIEWERWIDGET_HH
 #define REGISTRATIONVIEWERWIDGET_HH
 
-
 //== INCLUDES =================================================================
 
-
-#include "GlutExaminer.hh"
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "GlutExaminer.hh"
 #include "Transformation.hh"
-
 
 //== CLASS DEFINITION =========================================================
 
+class RegistrationViewer : public GlutExaminer {
+  typedef OpenMesh::TriMesh_ArrayKernelT<> Mesh;
 
+ public:
+  /// default constructor
+  RegistrationViewer(const char* _title, int _width, int _height);
 
-class RegistrationViewer : public GlutExaminer
-{
-    typedef OpenMesh::TriMesh_ArrayKernelT<>  Mesh;
+  // destructor
+  ~RegistrationViewer();
 
-public:
+  /// set output filename
+  void set_output(const std::string& filename);
 
-    /// default constructor
-    RegistrationViewer(const char* _title, int _width, int _height);
+  /// open meshes
+  bool open_meshes(const std::vector<std::string>& _filenames);
 
-    // destructor
-    ~RegistrationViewer();
+ protected:
+  virtual void draw(const std::string& _draw_mode);
+  virtual void keyboard(int key, int x, int y);
+  virtual void motion(int x, int y);
+  virtual void mouse(int button, int state, int x, int y);
 
-    /// set output filename
-    void set_output( const std::string & filename );
+ private:
+  /// update buffer with face indices
+  void update_face_indices();
 
-    /// open meshes
-    bool open_meshes(const std::vector<std::string> & _filenames);
+  /// draw the mesh in scene
+  virtual void draw(int index, const OpenMesh::Vec3f& color);
 
+  /// save current points
+  void save_points();
 
-protected:
+  /// clean mesh by removing "bad" triangles
+  void clean_mesh(Mesh& mesh);
 
-    virtual void draw(const std::string& _draw_mode);
-    virtual void keyboard(int key, int x, int y);
-    virtual void motion(int x, int y);
-    virtual void mouse(int button, int state, int x, int y);
+  /// perform registration
+  void perform_registration(bool tangential_motion);
 
-private:
+  /// subsample points
+  std::vector<int> subsample(const std::vector<Vector3d>& pts);
 
-    /// update buffer with face indices
-    void update_face_indices();
+  /// calculate correspondences
+  void calculate_correspondences(std::vector<Vector3d>& src,
+                                 std::vector<Vector3d>& target,
+                                 std::vector<Vector3d>& target_normals);
 
-    /// draw the mesh in scene
-    virtual void draw(int index, const OpenMesh::Vec3f & color);
+  /// get points of mesh
+  std::vector<Vector3d> get_points(const Mesh& mesh);
 
-    /// save current points
-    void save_points();
+  /// get normals of mesh
+  std::vector<Vector3d> get_normals(const Mesh& mesh);
 
-    /// clean mesh by removing "bad" triangles
-    void clean_mesh( Mesh & mesh );
+  /// get border vertices of mesh
+  std::vector<bool> get_borders(const Mesh& mesh);
 
-    /// perform registration
-    void perform_registration(bool tangential_motion);
+  /// get average vertex distance
+  float get_average_vertex_distance(const Mesh& mesh);
 
-    /// subsample points
-    std::vector<int> subsample( const std::vector< Vector3d > & pts );
+ protected:
+  enum Mode { VIEW, MOVE } mode_;
 
+ protected:
+  std::string outputFilename_;
 
-    /// calculate correspondences
-    void calculate_correspondences(
-        std::vector< Vector3d > & src,
-        std::vector< Vector3d > & target,
-        std::vector< Vector3d > & target_normals );
+  float averageVertexDistance_;
+  int currIndex_;
+  int numProcessed_;
+  std::vector<Mesh> meshes_;
+  std::vector<std::vector<unsigned int> > indices_;
+  std::vector<Transformation> transformations_;
 
-
-    /// get points of mesh
-    std::vector< Vector3d > get_points(const Mesh & mesh);
-
-    /// get normals of mesh
-    std::vector< Vector3d > get_normals(const Mesh & mesh);
-
-    /// get border vertices of mesh
-    std::vector< bool > get_borders(const Mesh & mesh);
-
-    /// get average vertex distance
-    float get_average_vertex_distance(const Mesh & mesh);
-
-protected:
-
-    enum Mode { VIEW, MOVE } mode_;
-
-protected:
-
-    std::string                             outputFilename_;
-
-    float                                     averageVertexDistance_;
-    int                                       currIndex_;
-    int                                       numProcessed_;
-    std::vector< Mesh >                       meshes_;
-    std::vector< std::vector<unsigned int> >  indices_;
-    std::vector< Transformation >             transformations_;
-
-    std::vector< int >                        sampledPoints_;
+  std::vector<int> sampledPoints_;
 };
 
-
 //=============================================================================
-#endif // REGISTRATIONVIEWERWIDGET_HH defined
+#endif  // REGISTRATIONVIEWERWIDGET_HH defined
 //=============================================================================
-

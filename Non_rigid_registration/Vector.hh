@@ -35,157 +35,139 @@
 //
 //=============================================================================
 
-
 #ifndef VECTOR_HH_
 #define VECTOR_HH_
-
-
+#include <cmath>
 template <class T, unsigned int C>
 struct Vector;
 
-typedef Vector<double,1>        Vector1d;
-typedef Vector<double,2>        Vector2d;
-typedef Vector<double,3>        Vector3d;
-typedef Vector<double,4>        Vector4d;
+typedef Vector<double, 1> Vector1d;
+typedef Vector<double, 2> Vector2d;
+typedef Vector<double, 3> Vector3d;
+typedef Vector<double, 4> Vector4d;
 
-typedef Vector<float,1>     Vector1f;
-typedef Vector<float,2>     Vector2f;
-typedef Vector<float,3>     Vector3f;
-typedef Vector<float,4>     Vector4f;
+typedef Vector<float, 1> Vector1f;
+typedef Vector<float, 2> Vector2f;
+typedef Vector<float, 3> Vector3f;
+typedef Vector<float, 4> Vector4f;
 
 /**
  * simple Vector class
  */
 template <class T, unsigned int C>
 struct Vector {
-    T v[C];
+  T v[C];
 
-    Vector() {}
+  Vector() {}
 
-    Vector(T v0, T v1) {
-        v[0]=v0;
-        v[1]=v1;
-    }
+  Vector(T v0, T v1) {
+    v[0] = v0;
+    v[1] = v1;
+  }
 
-    Vector(T v0, T v1, T v2) {
-        v[0]=v0;
-        v[1]=v1;
-        v[2]=v2;
-    }
+  Vector(T v0, T v1, T v2) {
+    v[0] = v0;
+    v[1] = v1;
+    v[2] = v2;
+  }
 
-    T & operator[](unsigned int i) {
-        return v[i];
-    }
+  T& operator[](unsigned int i) { return v[i]; }
 
-    const T & operator[](unsigned int i) const {
-        return v[i];
-    }
+  const T& operator[](unsigned int i) const { return v[i]; }
 
-    Vector & operator+=(const Vector & o) {
-        for(unsigned i = 0; i < C; i++) v[i] += o.v[i];
-        return *this;
-    }
+  Vector& operator+=(const Vector& o) {
+    for (unsigned i = 0; i < C; i++) v[i] += o.v[i];
+    return *this;
+  }
 
-    Vector & operator-=(const Vector & o) {
-        for(unsigned i = 0; i < C; i++) v[i] -= o.v[i];
-        return *this;
-    }
+  Vector& operator-=(const Vector& o) {
+    for (unsigned i = 0; i < C; i++) v[i] -= o.v[i];
+    return *this;
+  }
 
-    Vector & operator*=(T o) {
-        for(unsigned i = 0; i < C; i++) v[i] *= o;
-        return *this;
-    }
+  Vector& operator*=(T o) {
+    for (unsigned i = 0; i < C; i++) v[i] *= o;
+    return *this;
+  }
 
-    Vector & operator/=(T o) {
-        for(unsigned i = 0; i < C; i++) v[i] /= o;
-        return *this;
-    }
+  Vector& operator/=(T o) {
+    for (unsigned i = 0; i < C; i++) v[i] /= o;
+    return *this;
+  }
 
-    Vector & normalize() {
-        return (*this) /= length(*this);
-    }
+  Vector& normalize() { return (*this) /= length(*this); }
 
-    void fill(T f) {
-        for(unsigned i = 0; i< C; i++) v[i] = f;
-    }
-
+  void fill(T f) {
+    for (unsigned i = 0; i < C; i++) v[i] = f;
+  }
 };
 
-
-
 template <class T, unsigned int C>
-inline Vector<T,C> operator-(const Vector<T,C> & v1) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = -v1.v[i];
-    return res;
+inline Vector<T, C> operator-(const Vector<T, C>& v1) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = -v1.v[i];
+  return res;
 }
 
 template <class T, unsigned int C>
-inline Vector<T,C> operator+(const Vector<T,C> & v1, const Vector<T,C> & v2) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = v1.v[i] + v2.v[i];
-    return res;
+inline Vector<T, C> operator+(const Vector<T, C>& v1, const Vector<T, C>& v2) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = v1.v[i] + v2.v[i];
+  return res;
 }
 
 template <class T, unsigned int C>
-inline Vector<T,C> operator-(const Vector<T,C> & v1, const Vector<T,C> & v2) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = v1.v[i] - v2.v[i];
-    return res;
-}
-
-
-template <class T, unsigned int C>
-inline Vector<T,C> operator/(const Vector<T,C> & v, T s) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = v.v[i] / s;
-    return res;
+inline Vector<T, C> operator-(const Vector<T, C>& v1, const Vector<T, C>& v2) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = v1.v[i] - v2.v[i];
+  return res;
 }
 
 template <class T, unsigned int C>
-inline Vector<T,C> operator*(const Vector<T,C> & v, T s) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = v.v[i] * s;
-    return res;
+inline Vector<T, C> operator/(const Vector<T, C>& v, T s) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = v.v[i] / s;
+  return res;
 }
 
 template <class T, unsigned int C>
-inline Vector<T,C> operator*(T s, const Vector<T,C> & v) {
-    Vector<T,C> res;
-    for(unsigned i = 0; i < C; i++) res.v[i] = v.v[i] * s;
-    return res;
+inline Vector<T, C> operator*(const Vector<T, C>& v, T s) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = v.v[i] * s;
+  return res;
 }
 
+template <class T, unsigned int C>
+inline Vector<T, C> operator*(T s, const Vector<T, C>& v) {
+  Vector<T, C> res;
+  for (unsigned i = 0; i < C; i++) res.v[i] = v.v[i] * s;
+  return res;
+}
 
 template <class T>
-Vector<T,3> cross_product(const Vector<T,3> & a, const Vector<T,3> & b)  {
-    Vector<T,3> r;
-    r.v[0] = a.v[1]*b.v[2]-a.v[2]*b.v[1];
-    r.v[1] = a.v[2]*b.v[0]-a.v[0]*b.v[2];
-    r.v[2] = a.v[0]*b.v[1]-a.v[1]*b.v[0];
-    return r;
+Vector<T, 3> cross_product(const Vector<T, 3>& a, const Vector<T, 3>& b) {
+  Vector<T, 3> r;
+  r.v[0] = a.v[1] * b.v[2] - a.v[2] * b.v[1];
+  r.v[1] = a.v[2] * b.v[0] - a.v[0] * b.v[2];
+  r.v[2] = a.v[0] * b.v[1] - a.v[1] * b.v[0];
+  return r;
 }
-
-
 
 template <class T, unsigned int C>
-inline T dot_product(const Vector<T,C> & a, const Vector<T,C> & b)  {
-    T sum = a.v[0] * b.v[0];
-    for(unsigned i = 1; i < C; i++) sum += a.v[i] * b.v[i];
-    return sum;
+inline T dot_product(const Vector<T, C>& a, const Vector<T, C>& b) {
+  T sum = a.v[0] * b.v[0];
+  for (unsigned i = 1; i < C; i++) sum += a.v[i] * b.v[i];
+  return sum;
 }
-
 
 template <class T, unsigned int C>
-T length2(const Vector<T,C> & a) {
-    return (T) dot_product(a,a);
+T length2(const Vector<T, C>& a) {
+  return (T)dot_product(a, a);
 }
-
 
 template <class T, unsigned int C>
-T length(const Vector<T,C> & a) {
-    return (T) sqrt(length2(a));
+T length(const Vector<T, C>& a) {
+  return (T)sqrt(length2(a));
 }
-
 
 #endif /*VECTOR_HH_*/

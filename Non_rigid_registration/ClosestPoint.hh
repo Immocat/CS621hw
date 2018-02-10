@@ -47,33 +47,29 @@
  *
  * class that allows efficient closest point lookup using KD-tree (ANN library)
  */
-class ClosestPoint
-{
-public:
-    /// constructor
-    ClosestPoint();
+class ClosestPoint {
+ public:
+  /// constructor
+  ClosestPoint();
 
-    /// destructor
-    ~ClosestPoint();
+  /// destructor
+  ~ClosestPoint();
 
-    /// build ANN KD-tree for _pts
-    void init(const std::vector< Vector3d > & _pts);
+  /// build ANN KD-tree for _pts
+  void init(const std::vector<Vector3d>& _pts);
 
-    /// release data
-    void release();
+  /// release data
+  void release();
 
-    /// retrieve closest point of query
-    int getClosestPoint(const Vector3d & _queryVertex);
+  /// retrieve closest point of query
+  int getClosestPoint(const Vector3d& _queryVertex);
 
-private:
-    /// data points only used when ANN search is performed
-    ANNpointArray * dataPoints_;
+ private:
+  /// data points only used when ANN search is performed
+  ANNpointArray* dataPoints_;
 
-    /// kd tree search structure
-    ANNkd_tree * kDTree_;
-
+  /// kd tree search structure
+  ANNkd_tree* kDTree_;
 };
-
-
 
 #endif /* CLOSESTPOINT_HPP_ */

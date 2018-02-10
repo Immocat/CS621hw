@@ -35,7 +35,6 @@
 //
 //=============================================================================
 
-
 #ifndef TRANSFORMATION_HPP_
 #define TRANSFORMATION_HPP_
 
@@ -49,49 +48,45 @@
  * contains a rotation and translation defining a rigid transformation
  */
 class Transformation {
+ public:
+  /// constructor: identity transformation
+  Transformation();
 
-public:
-    /// constructor: identity transformation
-    Transformation();
+  /// constructor: translation
+  Transformation(float tx, float ty, float tz);
 
-    /// constructor: translation
-    Transformation(float tx, float ty, float tz);
+  /// constructor: rotation around axis
+  Transformation(float angle, Vector3f axis);
 
-    /// constructor: rotation around axis
-    Transformation(float angle, Vector3f axis);
+  /// set identity transformation
+  void set_identity();
 
-    /// set identity transformation
-    void set_identity();
+  /// apply transformation to current OpenGL Matrix
+  void apply_gl();
 
-    /// apply transformation to current OpenGL Matrix
-    void apply_gl();
+  /// retrieve curren OpenGL transformation
+  static Transformation retrieve_gl();
 
-    /// retrieve curren OpenGL transformation
-    static Transformation retrieve_gl();
+  /// concatenate two transformations
+  Transformation operator*(const Transformation& o);
 
-    /// concatenate two transformations
-    Transformation operator*( const Transformation & o );
+  /// return inverse transformation
+  Transformation inverse();
 
-    /// return inverse transformation
-    Transformation inverse();
+  /// Transform point
+  Vector3d transformPoint(const Vector3d& p);
 
-    /// Transform point
-    Vector3d transformPoint( const Vector3d & p );
+  /// Transform vector
+  Vector3d transformVector(const Vector3d& v);
 
-    /// Transform vector
-    Vector3d transformVector( const Vector3d & v );
+  /// Transform points
+  std::vector<Vector3d> transformPoints(const std::vector<Vector3d>& ps);
 
-    /// Transform points
-    std::vector< Vector3d > transformPoints( const std::vector< Vector3d > & ps );
+  /// Transform vectors
+  std::vector<Vector3d> transformVectors(const std::vector<Vector3d>& vs);
 
-    /// Transform vectors
-    std::vector< Vector3d > transformVectors( const std::vector< Vector3d > & vs );
-
-
-    Matrix3x3d rotation_;
-    Vector3d translation_;
-
-
+  Matrix3x3d rotation_;
+  Vector3d translation_;
 };
 
 #endif /* TRANSFORMATION_HPP_ */

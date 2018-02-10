@@ -13,73 +13,15 @@
         "name": "Release",
         "projects": [
           {
-            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2/build",
-            "name": "Exercise2",
-            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2",
+            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/build",
+            "name": "non_rigid",
+            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration",
             "targets": [
               {
                 "artifacts": [
-                  "/home/immocat/Documents/cs621/CS621hw/Exercise2/bin/exercise2"
+                  "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/lib/libann.a"
                 ],
-                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2/build",
-                "fileGroups": [
-                  {
-                    "isGenerated": false,
-                    "sources": [
-                      "ClosestPoint.hh",
-                      "GlutExaminer.hh",
-                      "GlutViewer.hh",
-                      "Matrix.hh",
-                      "Registration.hh",
-                      "RegistrationViewer.hh",
-                      "Transformation.hh",
-                      "Vector.hh",
-                      "gl.hh"
-                    ]
-                  },
-                  {
-                    "compileFlags": "-O3 -DNDEBUG  ",
-                    "defines": [
-                      "_USE_MATH_DEFINES"
-                    ],
-                    "includePath": [
-                      {
-                        "path": "/usr/local/include"
-                      },
-                      {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
-                      },
-                      {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise2"
-                      }
-                    ],
-                    "isGenerated": false,
-                    "language": "CXX",
-                    "sources": [
-                      "ClosestPoint.cc",
-                      "GlutExaminer.cc",
-                      "GlutViewer.cc",
-                      "Registration.cc",
-                      "RegistrationViewer.cc",
-                      "Transformation.cc",
-                      "registrationview.cc"
-                    ]
-                  }
-                ],
-                "fullName": "exercise2",
-                "linkFlags": "-rdynamic",
-                "linkLanguageFlags": "-O3 -DNDEBUG",
-                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libann.a",
-                "linkerLanguage": "CXX",
-                "name": "exercise2",
-                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2",
-                "type": "EXECUTABLE"
-              },
-              {
-                "artifacts": [
-                  "/home/immocat/Documents/cs621/CS621hw/Exercise2/lib/libann.a"
-                ],
-                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2/build",
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/build",
                 "fileGroups": [
                   {
                     "isGenerated": false,
@@ -108,10 +50,13 @@
                         "path": "/usr/local/include"
                       },
                       {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
                         "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
                       },
                       {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise2"
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration"
                       }
                     ],
                     "isGenerated": false,
@@ -137,15 +82,80 @@
                 "fullName": "libann.a",
                 "linkerLanguage": "CXX",
                 "name": "ann",
-                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise2",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration",
                 "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/bin/non_rigid"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "ClosestPoint.hh",
+                      "EventList.hh",
+                      "GlutExaminer.hh",
+                      "GlutViewer.hh",
+                      "ImproveMesh.hh",
+                      "Matrix.hh",
+                      "Registration.hh",
+                      "RegistrationViewer.hh",
+                      "Transformation.hh",
+                      "Vector.hh",
+                      "gl.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG   -std=gnu++11",
+                    "defines": [
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "ClosestPoint.cc",
+                      "EventList.cc",
+                      "GlutExaminer.cc",
+                      "GlutViewer.cc",
+                      "ImproveMesh.cc",
+                      "Registration.cc",
+                      "RegistrationViewer.cc",
+                      "Transformation.cc",
+                      "registrationview.cc"
+                    ]
+                  }
+                ],
+                "fullName": "non_rigid",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libann.a /usr/local/lib/libceres.a -lspqr -ltbb -ltbbmalloc -lcholmod -lccolamd -lcamd -lcolamd -lamd -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lcxsparse -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lcxsparse -lgomp -lpthread",
+                "linkerLanguage": "CXX",
+                "name": "non_rigid",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration",
+                "type": "EXECUTABLE"
               }
             ]
           }
         ]
       }
     ],
-    "cookie": "0.8539029548380814",
+    "cookie": "0.40005216375539465",
     "inReplyTo": "codemodel",
     "type": "reply"
   }
