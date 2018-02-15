@@ -105,3 +105,33 @@ ClosestPoint::getClosestPoint(const Vector3d& _queryVertex) {
 
   return nnIdx[0];
 }
+
+void ClosestPoint::getKClosestPoint(const Vector3d& _queryVertex, int k,
+                                    int* kids, double* dists) {
+  // kids must allocated by caller!
+  // suppose k < 100
+  // initialize ANN types for wrapping
+  ANNpoint queryPt;  // query point
+  // ANNidx nnIdx[100];   // near neighbor indices
+  // ANNdist dists[100];  // near neighbor distances
+
+  queryPt = annAllocPt(3);  // allocate query point
+
+  // assign values to ANN query point
+
+  queryPt[0] = _queryVertex[0];
+  queryPt[1] = _queryVertex[1];
+  queryPt[2] = _queryVertex[2];
+
+  kDTree_->annkSearch(  // approx k near neighbor search
+      queryPt,         // query point
+      k,                // number of near neighbors to return
+      kids,             // nearest neighbor array (modified)
+      dists,            // dist to near neighbors (modified)
+      0.0               // error bound
+  );                    // pure virtual (defined elsewhere)
+
+  annDeallocPt(queryPt);
+
+  // return nnIdx[0];
+}

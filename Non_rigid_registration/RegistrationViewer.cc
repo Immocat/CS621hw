@@ -93,6 +93,8 @@ RegistrationViewer::RegistrationViewer(const char *_title, int _width,
   S_id = 0;
 
   mode_ = VIEW;
+
+  draw_DG = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -301,19 +303,23 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
   draw(M, M_indices, OpenMesh::Vec3f(0.1, 0.5, 0.1), _draw_mode);
   draw(S, S_indices, OpenMesh::Vec3f(0.5, 0.5, 0.5), _draw_mode);
 
-  // display subsampled points
-  // std::vector<Vector3d> pts = get_points(meshes_[currIndex_]);
-  // glEnable(GL_COLOR_MATERIAL);
-  // glColor3f(0, 0, 1);
-  // for (int i = 0; i < (int)sampledPoints_.size(); i++) {
-  //   glPushMatrix();
-  //   Vector3d pt = pts[sampledPoints_[i]];
-  //   pt = transformations_[currIndex_].transformPoint(pt);
-  //   glTranslatef(pt[0], pt[1], pt[2]);
-  //   glutSolidSphere(averageVertexDistance_, 10, 10);
-  //   glPopMatrix();
-  // }
-  // glDisable(GL_COLOR_MATERIAL);
+  // display deformation graph
+  if (draw_DG) {
+    // draw sumplepoints
+    glEnable(GL_COLOR_MATERIAL);
+    glColor3f(0, 0, 1);
+    for (int i = 0; i < (int)M_DG.X.size(); i++) {
+      glPushMatrix();
+      const Vector3d& pt = M_DG.X[i];
+      //pt = transformations_[currIndex_].transformPoint(pt);
+      glTranslatef(pt[0], pt[1], pt[2]);
+      glutSolidSphere(averageVertexDistance_, 10, 10);
+      glPopMatrix();
+    }
+    glDisable(GL_COLOR_MATERIAL);
+    // TODO: draw DG edges
+
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -413,10 +419,11 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
       glutPostRedisplay();
       break;
     }
-    case 'w': {
-      // _draw_mode = "Wireframe";
-      // glutPostRedisplay();
-      // break;
+    case 'd': {
+      draw_DG = !draw_DG;
+      printf("[Draw Deformation Graph]: True\n");
+      glutPostRedisplay();
+      break;
     }
     default: {
       GlutExaminer::keyboard(key, x, y);
@@ -596,17 +603,16 @@ float RegistrationViewer::get_average_vertex_distance(const Mesh &_mesh) const {
 //=============================================================================
 
 // get points of mesh
-std::vector<Vector3d> RegistrationViewer::get_points(const Mesh &_mesh) {
-  std::vector<Vector3d> pts;
-
+void RegistrationViewer::get_points(
+    const Mesh &_mesh, std::vector<Vector3d> &pts,
+    std::vector<OpenMesh::VertexHandle> &vHandles) const {
   Mesh::ConstVertexIter v_it(_mesh.vertices_begin()),
       v_end(_mesh.vertices_end());
   for (; v_it != v_end; ++v_it) {
     Vec3f p = _mesh.point(*v_it);
     pts.push_back(Vector3d(p[0], p[1], p[2]));
+    vHandles.push_back(*v_it);
   }
-
-  return pts;
 }
 
 //=============================================================================

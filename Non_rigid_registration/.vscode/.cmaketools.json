@@ -95,6 +95,7 @@
                     "isGenerated": false,
                     "sources": [
                       "ClosestPoint.hh",
+                      "DeformationGraph.hh",
                       "EventList.hh",
                       "GlutExaminer.hh",
                       "GlutViewer.hh",
@@ -129,6 +130,7 @@
                     "language": "CXX",
                     "sources": [
                       "ClosestPoint.cc",
+                      "DeformationGraph.cc",
                       "EventList.cc",
                       "GlutExaminer.cc",
                       "GlutViewer.cc",
@@ -155,7 +157,7 @@
         ]
       }
     ],
-    "cookie": "0.5447025201514417",
+    "cookie": "0.8684005382452102",
     "inReplyTo": "codemodel",
     "type": "reply"
   }

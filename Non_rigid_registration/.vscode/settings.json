@@ -42,6 +42,7 @@
         "type_traits": "cpp",
         "typeinfo": "cpp",
         "core": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "cstdarg": "cpp"
     }
 }

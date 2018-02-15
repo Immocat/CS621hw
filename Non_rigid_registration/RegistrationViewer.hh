@@ -41,6 +41,7 @@
 //== INCLUDES =================================================================
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "DeformationGraph.hh"
 #include "EventList.hh"
 #include "GlutExaminer.hh"
 #include "Transformation.hh"
@@ -68,13 +69,15 @@ class RegistrationViewer : public GlutExaminer {
 
  private:
   /// draw the mesh in scene
-  void draw(const Mesh& mesh,const std::vector<unsigned int> &indices, const OpenMesh::Vec3f& color,const std::string& _draw_mode);
+  void draw(const Mesh& mesh, const std::vector<unsigned int>& indices,
+            const OpenMesh::Vec3f& color, const std::string& _draw_mode);
 
   /// clean mesh by removing "bad" triangles
   void clean_mesh(Mesh& mesh);
 
   /// get points of mesh
-  std::vector<Vector3d> get_points(const Mesh& mesh);
+  void get_points(const Mesh& mesh, std::vector<Vector3d>& points,
+                  std::vector<OpenMesh::VertexHandle>& vhandles) const;
 
   /// get normals of mesh
   std::vector<Vector3d> get_normals(const Mesh& mesh);
@@ -105,10 +108,10 @@ class RegistrationViewer : public GlutExaminer {
 
   // TODO: need more parameters
   // calculate signed distance
-  //void calculateSignedDistance(const Mesh& mesh);
+  // void calculateSignedDistance(const Mesh& mesh);
 
   // TODO: need more parameters
-  //void constranTopology(Mesh* mesh);
+  // void constranTopology(Mesh* mesh);
 
   // save M to Disk
   bool saveMeshToDisk(const Mesh& mesh) const;
@@ -119,6 +122,9 @@ class RegistrationViewer : public GlutExaminer {
   void update_face_indices(const Mesh& mesh,
                            std::vector<unsigned int>& indices);
 
+  void subsample(const std::vector<Vector3d>& pts, std::vector<int>& sample_ids,
+                 const Mesh& mesh);
+
  protected:
   enum Mode { VIEW, MOVE } mode_;
 
@@ -127,10 +133,12 @@ class RegistrationViewer : public GlutExaminer {
   std::vector<std::string> filenames;
   std::vector<unsigned int> M_indices;
   std::vector<unsigned int> S_indices;
+  DeformationGraph M_DG;
   int S_id;
   Mesh M;
   Mesh S;
   EventList m_eventList;
+  bool draw_DG;
 };
 
 //=============================================================================
