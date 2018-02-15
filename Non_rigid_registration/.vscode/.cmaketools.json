@@ -98,7 +98,6 @@
                       "EventList.hh",
                       "GlutExaminer.hh",
                       "GlutViewer.hh",
-                      "ImproveMesh.hh",
                       "Matrix.hh",
                       "Registration.hh",
                       "RegistrationViewer.hh",
@@ -134,6 +133,7 @@
                       "GlutExaminer.cc",
                       "GlutViewer.cc",
                       "ImproveMesh.cc",
+                      "Non_rigid_registration.cc",
                       "Registration.cc",
                       "RegistrationViewer.cc",
                       "Transformation.cc",
@@ -155,7 +155,7 @@
         ]
       }
     ],
-    "cookie": "0.40005216375539465",
+    "cookie": "0.4643057215549422",
     "inReplyTo": "codemodel",
     "type": "reply"
   }

@@ -10,9 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/non_rigid",
             "args": [
-                "output-pts",
-                "/home/immocat/Documents/cs621/CS621hw/Exercise2/data/bunny01.obj",
-                "/home/immocat/Documents/cs621/CS621hw/Exercise2/data/bunny02.obj"
+                "${workspaceFolder}/bin/test.txt"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

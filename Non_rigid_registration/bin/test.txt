@@ -1,0 +1,2 @@
+/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000000.obj
+/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000060.obj

@@ -39,11 +39,12 @@
 #define REGISTRATIONVIEWERWIDGET_HH
 
 //== INCLUDES =================================================================
-
+#include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "EventList.hh"
 #include "GlutExaminer.hh"
 #include "Transformation.hh"
-
+class EventList;
 //== CLASS DEFINITION =========================================================
 
 class RegistrationViewer : public GlutExaminer {
@@ -56,11 +57,8 @@ class RegistrationViewer : public GlutExaminer {
   // destructor
   ~RegistrationViewer();
 
-  /// set output filename
-  void set_output(const std::string& filename);
-
-  /// open meshes
-  bool open_meshes(const std::vector<std::string>& _filenames);
+  /// copy all filenames, open Mesh S0, set M->S0, improve M
+  bool init(const std::vector<std::string>& _filenames);
 
  protected:
   virtual void draw(const std::string& _draw_mode);
@@ -69,28 +67,11 @@ class RegistrationViewer : public GlutExaminer {
   virtual void mouse(int button, int state, int x, int y);
 
  private:
-  /// update buffer with face indices
-  void update_face_indices();
-
   /// draw the mesh in scene
-  virtual void draw(int index, const OpenMesh::Vec3f& color);
-
-  /// save current points
-  void save_points();
+  void draw(const Mesh& mesh,const std::vector<unsigned int> &indices, const OpenMesh::Vec3f& color,const std::string& _draw_mode);
 
   /// clean mesh by removing "bad" triangles
   void clean_mesh(Mesh& mesh);
-
-  /// perform registration
-  void perform_registration(bool tangential_motion);
-
-  /// subsample points
-  std::vector<int> subsample(const std::vector<Vector3d>& pts);
-
-  /// calculate correspondences
-  void calculate_correspondences(std::vector<Vector3d>& src,
-                                 std::vector<Vector3d>& target,
-                                 std::vector<Vector3d>& target_normals);
 
   /// get points of mesh
   std::vector<Vector3d> get_points(const Mesh& mesh);
@@ -102,22 +83,54 @@ class RegistrationViewer : public GlutExaminer {
   std::vector<bool> get_borders(const Mesh& mesh);
 
   /// get average vertex distance
-  float get_average_vertex_distance(const Mesh& mesh);
+  float get_average_vertex_distance(const Mesh& mesh) const;
+
+  // void init_improve_weights();
+  // void new_mid_point(const OpenMesh::TriMesh_ArrayKernelT<>
+  // &M,OpenMesh::EdgeHandle heh,OpenMesh::Vec3f &newPoint);
+
+  // improve mesh triangle mesh M with split and collapse, save operation to
+  // eventList
+  void improveMesh(Mesh& mesh, EventList* eventList,
+                   std::vector<unsigned int>& indices);
+
+  // automaticly start the whole process with or without fine alignment
+  void start_morph(bool bFine_align = true);
+
+  // Coarse alignment M to S
+  void coarseNonRigidAlignment(Mesh& src_mesh, const Mesh& target_mesh);
+
+  // fineLiearAlignment M to S
+  void fineLiearAlignment(Mesh& src_mesh, const Mesh& target_mesh);
+
+  // TODO: need more parameters
+  // calculate signed distance
+  //void calculateSignedDistance(const Mesh& mesh);
+
+  // TODO: need more parameters
+  //void constranTopology(Mesh* mesh);
+
+  // save M to Disk
+  bool saveMeshToDisk(const Mesh& mesh) const;
+
+  bool loadTargetMesh(Mesh& mesh, const std::string& filename,
+                      std::vector<unsigned int>& indices);
+
+  void update_face_indices(const Mesh& mesh,
+                           std::vector<unsigned int>& indices);
 
  protected:
   enum Mode { VIEW, MOVE } mode_;
 
  protected:
-  std::string outputFilename_;
-
   float averageVertexDistance_;
-  int currIndex_;
-  int numProcessed_;
-  std::vector<Mesh> meshes_;
-  std::vector<std::vector<unsigned int> > indices_;
-  std::vector<Transformation> transformations_;
-
-  std::vector<int> sampledPoints_;
+  std::vector<std::string> filenames;
+  std::vector<unsigned int> M_indices;
+  std::vector<unsigned int> S_indices;
+  int S_id;
+  Mesh M;
+  Mesh S;
+  EventList m_eventList;
 };
 
 //=============================================================================

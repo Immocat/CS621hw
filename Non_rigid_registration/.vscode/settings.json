@@ -41,6 +41,7 @@
         "tuple": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "complex": "cpp"
     }
 }

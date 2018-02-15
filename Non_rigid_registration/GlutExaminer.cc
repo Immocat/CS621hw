@@ -51,11 +51,12 @@ GlutExaminer::GlutExaminer(const char* _title, int _width, int _height)
   for (int i = 0; i < 10; ++i) button_down_[i] = false;
 
   // draw mode
-  add_draw_mode("Wireframe");
-  add_draw_mode("Hidden Line");
-  add_draw_mode("Solid Flat");
   add_draw_mode("Solid Smooth");
-  set_draw_mode(1);
+  add_draw_mode("Wireframe");
+  //add_draw_mode("Hidden Line");
+  //add_draw_mode("Solid Flat");
+  //add_draw_mode("Solid Smooth");
+  set_draw_mode(0);
 }
 
 //-----------------------------------------------------------------------------
