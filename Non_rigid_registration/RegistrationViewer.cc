@@ -111,8 +111,8 @@ bool RegistrationViewer::init(const std::vector<std::string> &_filenames) {
   S_id = 0;
   // copy all filenames
   filenames = _filenames;
-  //init EventList
-  m_eventList.init(filenames.size());
+  // init EventList
+  m_eventList.init(filenames.size() - 1);
   // open Mesh M,S0
   if (!loadTargetMesh(M, filenames[S_id++], M_indices)) {
     printf("Cannot load mesh %s.\n", filenames[S_id - 1].c_str());
@@ -281,18 +281,6 @@ void RegistrationViewer::start_morph(bool bFine_align) {
   //
 }
 
-// Coarse alignment M to S
-void RegistrationViewer::coarseNonRigidAlignment(Mesh &src_mesh,
-                                                 const Mesh &target_mesh) {
-  //
-}
-
-// fineLiearAlignment M to S
-void RegistrationViewer::fineLiearAlignment(Mesh &src_mesh,
-                                            const Mesh &target_mesh) {
-  //
-}
-
 // TODO: need more parameters
 // calculate signed distance
 // void calculateSignedDistance(const Mesh& mesh);
@@ -353,7 +341,7 @@ void RegistrationViewer::draw(const Mesh &mesh,
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisable(GL_COLOR_MATERIAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  } else if(_draw_mode == "Solid Smooth"){
+  } else if (_draw_mode == "Solid Smooth") {
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
@@ -425,7 +413,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
       glutPostRedisplay();
       break;
     }
-    case 'w':{
+    case 'w': {
       // _draw_mode = "Wireframe";
       // glutPostRedisplay();
       // break;

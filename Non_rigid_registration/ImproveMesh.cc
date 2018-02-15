@@ -106,7 +106,7 @@ static void split_edge(OpenMesh::TriMesh_ArrayKernelT<>& mesh,
   //      vv_it.is_valid(); ++vv_it) {
   //   std::cout << "vv test: " << *vv_it << std::endl;
   // }
-  // is eventList is valid, add new event to frame S_id - 1, since S_id is point
+  // is eventList is valid, add new event to frame S_id - 2, since S_id is point
   // to next frame's mesh
   if (eventList) {
     Event newEvent;
@@ -141,7 +141,7 @@ static void collapse_edge(OpenMesh::TriMesh_ArrayKernelT<>& mesh,
   mesh.adjust_outgoing_halfedge(v0);
   mesh.adjust_outgoing_halfedge(v2);
   mesh.adjust_outgoing_halfedge(v3);
-  // is eventList is valid, add new event to frame S_id - 1, since S_id is point
+  // is eventList is valid, add new event to frame S_id - 2, since S_id is point
   // to next frame's mesh
   if (eventList) {
     Event newEvent;
@@ -202,7 +202,7 @@ void RegistrationViewer::improveMesh(Mesh& mesh, EventList* eventList,
     if (edgeLength2 > max_edge_norm2) {
       // need edge split
       Mesh::Point newPoint = (p + q) * 0.5;
-      split_edge(mesh, *e_it, newPoint, eventList, S_id - 1);
+      split_edge(mesh, *e_it, newPoint, eventList, S_id - 2);
       // mesh.garbage_collection();
       edge_long++;
     }
@@ -225,7 +225,7 @@ void RegistrationViewer::improveMesh(Mesh& mesh, EventList* eventList,
     // float dihedral_cos_abs = std::abs(normal0 | normal1);
     if ((edgeLength2 < min_edge_norm2) && mesh.is_collapse_ok(he)) {
       // need edge collapse
-      collapse_edge(mesh, *e_it, eventList, S_id - 1);
+      collapse_edge(mesh, *e_it, eventList, S_id - 2);
       edge_short++;
     }
   }
@@ -252,19 +252,19 @@ void RegistrationViewer::improveMesh(Mesh& mesh, EventList* eventList,
     if (((p1 - p0) | (p2 - p0)) > 0.98480775301) {
       // inner angle less than 10 degree
       // collapse p1p2
-      collapse_edge(mesh, mesh.edge_handle(hals[1]), eventList, S_id - 1);
+      collapse_edge(mesh, mesh.edge_handle(hals[1]), eventList, S_id - 2);
       continue;
     }
     if (((p0 - p1) | (p2 - p1)) > 0.98480775301) {
       // inner angle less than 10 degree
       // collapse p1p2
-      collapse_edge(mesh, mesh.edge_handle(hals[2]), eventList, S_id - 1);
+      collapse_edge(mesh, mesh.edge_handle(hals[2]), eventList, S_id - 2);
       continue;
     }
     if (((p0 - p2) | (p1 - p2)) > 0.98480775301) {
       // inner angle less than 10 degree
       // collapse p1p2
-      collapse_edge(mesh, mesh.edge_handle(hals[0]), eventList, S_id - 1);
+      collapse_edge(mesh, mesh.edge_handle(hals[0]), eventList, S_id - 2);
       continue;
     }
   }
