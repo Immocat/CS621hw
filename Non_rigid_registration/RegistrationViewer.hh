@@ -101,7 +101,9 @@ class RegistrationViewer : public GlutExaminer {
   void start_morph(bool bFine_align = true);
 
   // Coarse alignment M to S
-  void coarseNonRigidAlignment(Mesh& src_mesh, const Mesh& target_mesh);
+  void coarseNonRigidAlignment(Mesh* src_mesh,
+                               const std::vector<unsigned int>& src_indices,
+                               const Mesh& target_mesh);
 
   // fineLiearAlignment M to S
   void fineLiearAlignment(Mesh& src_mesh, const Mesh& target_mesh);

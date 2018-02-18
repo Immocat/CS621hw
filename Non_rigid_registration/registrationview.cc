@@ -33,6 +33,7 @@
 #include <cstdio>
 #include "RegistrationViewer.hh"
 #include <fstream>
+#include <geodesic/geodesic_algorithm_exact.h>
 using namespace std;
 
 static bool getFileNames(char* name,std::vector<std::string> &filenames){
@@ -48,7 +49,6 @@ static bool getFileNames(char* name,std::vector<std::string> &filenames){
 } 
 int main(int argc, char **argv) {
   glutInit(&argc, argv);
-
   RegistrationViewer window("Registration Viewer", 512, 512);
 
   if (argc == 2) {

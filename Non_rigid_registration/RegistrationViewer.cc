@@ -126,6 +126,7 @@ bool RegistrationViewer::init(const std::vector<std::string> &_filenames) {
   }
   // improve Mesh
   improveMesh(M, &m_eventList, M_indices);
+  improveMesh(S, nullptr, S_indices);
 
   // get average vertex radius for rednering sampled point
   averageVertexDistance_ = get_average_vertex_distance(M);
@@ -308,17 +309,26 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
     // draw sumplepoints
     glEnable(GL_COLOR_MATERIAL);
     glColor3f(0, 0, 1);
-    for (int i = 0; i < (int)M_DG.X.size(); i++) {
+    for (int i = 0; i < (int)M_DG.X.size(); ++i) {
       glPushMatrix();
-      const Vector3d& pt = M_DG.X[i];
-      //pt = transformations_[currIndex_].transformPoint(pt);
+      const Vector3d &pt = M_DG.X[i];
+      // pt = transformations_[currIndex_].transformPoint(pt);
       glTranslatef(pt[0], pt[1], pt[2]);
       glutSolidSphere(averageVertexDistance_, 10, 10);
       glPopMatrix();
     }
-    glDisable(GL_COLOR_MATERIAL);
     // TODO: draw DG edges
-
+    glLineWidth(averageVertexDistance_ * 0.5);
+    glBegin(GL_LINES);
+    for (int i = 0; i < (int)M_DG.X.size(); ++i) {
+      const Vector3d &pt(M_DG.X[i]);
+      for (const int &j : M_DG.X_edges[i]) {
+        glVertex3f(pt[0], pt[1], pt[2]);
+        glVertex3f(M_DG.X[j][0], M_DG.X[j][1], M_DG.X[j][2]);
+      }
+    }
+    glEnd();
+    glDisable(GL_COLOR_MATERIAL);
   }
 }
 
@@ -405,7 +415,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
       }
     }
     case 'c': {
-      coarseNonRigidAlignment(M, S);
+      coarseNonRigidAlignment(&M, M_indices, S);
       glutPostRedisplay();
       break;
     }
@@ -421,7 +431,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
     }
     case 'd': {
       draw_DG = !draw_DG;
-      printf("[Draw Deformation Graph]: True\n");
+      printf("[Draw Deformation Graph]: %s\n", draw_DG ? "True" : "False");
       glutPostRedisplay();
       break;
     }
