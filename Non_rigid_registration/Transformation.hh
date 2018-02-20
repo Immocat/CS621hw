@@ -68,16 +68,16 @@ class Transformation {
   static Transformation retrieve_gl();
 
   /// concatenate two transformations
-  Transformation operator*(const Transformation& o);
+  Transformation operator*(const Transformation& o) const;
 
   /// return inverse transformation
   Transformation inverse();
 
   /// Transform point
-  Vector3d transformPoint(const Vector3d& p);
+  Vector3d transformPoint(const Vector3d& p) const;
 
   /// Transform vector
-  Vector3d transformVector(const Vector3d& v);
+  Vector3d transformVector(const Vector3d& v) const;
 
   /// Transform points
   std::vector<Vector3d> transformPoints(const std::vector<Vector3d>& ps);

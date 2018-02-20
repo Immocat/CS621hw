@@ -94,7 +94,7 @@ RegistrationViewer::RegistrationViewer(const char *_title, int _width,
 
   mode_ = VIEW;
 
-  draw_DG = false;
+  draw_DG = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -308,13 +308,14 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
   if (draw_DG) {
     // draw sumplepoints
     glEnable(GL_COLOR_MATERIAL);
-    glColor3f(0, 0, 1);
+    // orange
+    glColor3f(1, 0.64453125, 0);
     for (int i = 0; i < (int)M_DG.X.size(); ++i) {
       glPushMatrix();
       const Vector3d &pt = M_DG.X[i];
       // pt = transformations_[currIndex_].transformPoint(pt);
       glTranslatef(pt[0], pt[1], pt[2]);
-      glutSolidSphere(averageVertexDistance_, 10, 10);
+      glutSolidSphere(averageVertexDistance_ * 0.5, 10, 10);
       glPopMatrix();
     }
     // TODO: draw DG edges
@@ -616,6 +617,8 @@ float RegistrationViewer::get_average_vertex_distance(const Mesh &_mesh) const {
 void RegistrationViewer::get_points(
     const Mesh &_mesh, std::vector<Vector3d> &pts,
     std::vector<OpenMesh::VertexHandle> &vHandles) const {
+  pts.clear();
+  vHandles.clear();
   Mesh::ConstVertexIter v_it(_mesh.vertices_begin()),
       v_end(_mesh.vertices_end());
   for (; v_it != v_end; ++v_it) {
@@ -628,32 +631,28 @@ void RegistrationViewer::get_points(
 //=============================================================================
 
 // get normals of mesh
-std::vector<Vector3d> RegistrationViewer::get_normals(const Mesh &_mesh) {
-  std::vector<Vector3d> normals;
-
+void RegistrationViewer::get_normals(const Mesh &_mesh,
+                                     std::vector<Vector3d> &normals) {
+  normals.clear();
   Mesh::ConstVertexIter v_it(_mesh.vertices_begin()),
       v_end(_mesh.vertices_end());
   for (; v_it != v_end; ++v_it) {
     Vec3f n = _mesh.normal(*v_it);
     normals.push_back(Vector3d(n[0], n[1], n[2]));
   }
-
-  return normals;
 }
 
 //=============================================================================
 
 // get border vertices of mesh
-std::vector<bool> RegistrationViewer::get_borders(const Mesh &_mesh) {
-  std::vector<bool> borders;
-
+void RegistrationViewer::get_borders(const Mesh &_mesh,
+                                     std::vector<bool> &borders) {
+  borders.clear();
   Mesh::ConstVertexIter v_it(_mesh.vertices_begin()),
       v_end(_mesh.vertices_end());
   for (; v_it != v_end; ++v_it) {
     borders.push_back(_mesh.is_boundary(*v_it));
   }
-
-  return borders;
 }
 
 //=============================================================================

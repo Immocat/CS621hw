@@ -48,8 +48,8 @@ file(GLOB all_headers *.hh)
 
 file(GLOB ann_sources ANN/*.cpp)
 file(GLOB ann_headers ANN/*.h)
-file(GLOB geo_headers geodesic/*.h)
-file(GLOB geo_sources geodesic/*.cpp)
+#file(GLOB geo_headers geodesic/*.h)
+#file(GLOB geo_sources geodesic/*.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 

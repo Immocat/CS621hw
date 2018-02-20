@@ -56,6 +56,7 @@ template <class T, unsigned int R, unsigned int C>
 struct Matrix {
   /// data
   T v[R][C];
+  Matrix(){set_identity();}
 
   /// access row
   T* operator[](unsigned int i) { return v[i]; }

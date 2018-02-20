@@ -80,10 +80,10 @@ class RegistrationViewer : public GlutExaminer {
                   std::vector<OpenMesh::VertexHandle>& vhandles) const;
 
   /// get normals of mesh
-  std::vector<Vector3d> get_normals(const Mesh& mesh);
+  void get_normals(const Mesh& mesh, std::vector<Vector3d>& normals);
 
   /// get border vertices of mesh
-  std::vector<bool> get_borders(const Mesh& mesh);
+  void get_borders(const Mesh& mesh,std::vector<bool>& isBorders);
 
   /// get average vertex distance
   float get_average_vertex_distance(const Mesh& mesh) const;
@@ -125,7 +125,10 @@ class RegistrationViewer : public GlutExaminer {
                            std::vector<unsigned int>& indices);
 
   void subsample(const std::vector<Vector3d>& pts, std::vector<int>& sample_ids,
-                 const Mesh& mesh);
+                 const double avgDis);
+
+  void flag_components(OpenMesh::VPropHandleT<int> comp_id, Mesh* mesh,
+                       int& numOfComps);
 
  protected:
   enum Mode { VIEW, MOVE } mode_;

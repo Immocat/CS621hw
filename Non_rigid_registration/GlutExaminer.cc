@@ -53,6 +53,7 @@ GlutExaminer::GlutExaminer(const char* _title, int _width, int _height)
   // draw mode
   add_draw_mode("Solid Smooth");
   add_draw_mode("Wireframe");
+  add_draw_mode("Nothing");
   //add_draw_mode("Hidden Line");
   //add_draw_mode("Solid Flat");
   //add_draw_mode("Solid Smooth");

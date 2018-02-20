@@ -62,9 +62,10 @@ class ClosestPoint {
   void release();
 
   /// retrieve closest point of query
-  int getClosestPoint(const Vector3d& _queryVertex);
-  
-  void getKClosestPoint(const Vector3d& _queryVertex, int k, int* kids, double* dists);
+  int getClosestPoint(const Vector3d& _queryVertex) const;
+
+  void getKClosestPoint(const Vector3d& _queryVertex, int k, int* kids,
+                        double* dists) const;
 
  private:
   /// data points only used when ANN search is performed

@@ -1,83 +1,97 @@
 #include "DeformationGraph.hh"
-#include <geodesic/geodesic_algorithm_exact.h>
+//#include <geodesic/geodesic_algorithm_exact.h>
 #include <unordered_map>
 #include "ClosestPoint.hh"
+#include "Timer.hh"
 DeformationGraph::DeformationGraph(
     const std::vector<Vector3d> &xi_pos, Mesh *mesh,
     const std::vector<OpenMesh::VertexHandle> &vHandles,
     const std::vector<int> &sample_ids,
-    const std::vector<unsigned int> &src_indices) {
-  init(xi_pos, mesh, vHandles, sample_ids, src_indices);
+    const std::vector<unsigned int> &src_indices, int numOfComps,
+    OpenMesh::VPropHandleT<int> comp_id) {
+  init(xi_pos, mesh, vHandles, sample_ids, src_indices, numOfComps, comp_id);
 }
-void DeformationGraph::flag_components(OpenMesh::VPropHandleT<int> comp_id,
-                                       Mesh *mesh, int &numOfComps) const {
-  numOfComps = 0;
-  // iterate over all vertices
-  Mesh::VertexIter v_it = mesh->vertices_begin();
-  Mesh::VertexIter v_end = mesh->vertices_end();
-  for (Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != v_end; ++v_it)
-    mesh->property(comp_id, *v_it) =
-        -1;  // init, all vertex belongs to -1(invalid) component
+// void DeformationGraph::flag_components(OpenMesh::VPropHandleT<int> comp_id,
+//                                        Mesh *mesh, int &numOfComps) const {
+//   numOfComps = 0;
+//   // iterate over all vertices
+//   Mesh::VertexIter v_it = mesh->vertices_begin();
+//   Mesh::VertexIter v_end = mesh->vertices_end();
+//   for (Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != v_end; ++v_it)
+//     mesh->property(comp_id, *v_it) =
+//         -1;  // init, all vertex belongs to -1(invalid) component
 
-  Mesh::VertexHandle vh;
-  Mesh::VertexIter current_pos = mesh->vertices_begin();
+//   Mesh::VertexHandle vh;
+//   Mesh::VertexIter current_pos = mesh->vertices_begin();
 
-  while (true) {
-    // find an unvisited vertex
-    bool found = false;
-    for (v_it = current_pos; v_it != v_end; ++v_it)
-      if (mesh->property(comp_id, *v_it) == -1) {
-        found = true;
-        vh = *v_it;
-        mesh->property(comp_id, *v_it) = numOfComps;
-        current_pos = v_it;
-        break;
-      }
+//   while (true) {
+//     // find an unvisited vertex
+//     bool found = false;
+//     for (v_it = current_pos; v_it != v_end; ++v_it)
+//       if (mesh->property(comp_id, *v_it) == -1) {
+//         found = true;
+//         vh = *v_it;
+//         mesh->property(comp_id, *v_it) = numOfComps;
+//         current_pos = v_it;
+//         break;
+//       }
 
-    // if none was found -> finished
-    if (!found) break;
+//     // if none was found -> finished
+//     if (!found) break;
 
-    numOfComps++;
+//     numOfComps++;
 
-    std::vector<Mesh::VertexHandle> handles;
-    handles.push_back(vh);
+//     std::vector<Mesh::VertexHandle> handles;
+//     handles.push_back(vh);
 
-    // grow from found vertex
-    while (handles.size() > 0) {
-      Mesh::VertexHandle current = handles.back();
-      handles.pop_back();
+//     // grow from found vertex
+//     while (handles.size() > 0) {
+//       Mesh::VertexHandle current = handles.back();
+//       handles.pop_back();
 
-      Mesh::VertexVertexIter vv_it;
+//       Mesh::VertexVertexIter vv_it;
 
-      for (vv_it = mesh->vv_iter(current); vv_it.is_valid(); ++vv_it)
-        if (mesh->property(comp_id, *vv_it) == -1) {
-          mesh->property(comp_id, *vv_it) = numOfComps - 1;
-          handles.push_back(*vv_it);
-        }
-    }
+//       for (vv_it = mesh->vv_iter(current); vv_it.is_valid(); ++vv_it)
+//         if (mesh->property(comp_id, *vv_it) == -1) {
+//           mesh->property(comp_id, *vv_it) = numOfComps - 1;
+//           handles.push_back(*vv_it);
+//         }
+//     }
+//   }
+// }
+void DeformationGraph::updateTransforms(
+    const std::vector<Transformation> &newTransforms) {
+  // TODO
+  for (int i = 0; i < stPairs.size(); ++i) {
+    int xid = stPairs[i].first;
+    // X_T[xid] = newMatrix[i]  * X_T[xid] , update for all pairs
+    X_T[xid] = newTransforms[i] * X_T[xid];
   }
 }
+
 void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
                             const std::vector<OpenMesh::VertexHandle> &vHandles,
                             const std::vector<int> &sample_ids,
-                            const std::vector<unsigned int> &src_indices) {
-  
+                            const std::vector<unsigned int> &src_indices,
+                            int numOfComps,
+                            OpenMesh::VPropHandleT<int> comp_id) {
   // 1. get all graph nodes
   m_mesh = mesh;
-  static int k = 4;
+  static const int k = 4;
   X.clear();
+  X_edges.clear();
+  X_normal.clear();
+  X_T.clear();
+  X.reserve(sample_ids.size());
+  X_normal.reserve(sample_ids.size());
   for (int i = 0; i < sample_ids.size(); ++i) {
-    X.push_back(v_pos[sample_ids[i]]);
+    X.emplace_back(v_pos[sample_ids[i]]);
+    OpenMesh::Vec3f n(mesh->normal(vHandles[sample_ids[i]]));
+    X_normal.emplace_back(n[0], n[1], n[2]);
   }
   X_edges.assign(X.size(), std::unordered_set<int>());
-  // 2. try to separate src mesh into different connected part
-  // using floodfill method
-  OpenMesh::VPropHandleT<int> comp_id;
-  mesh->add_property(comp_id);
-  int numOfComps = 0;
-  flag_components(comp_id, mesh, numOfComps);
-  printf("\t[DeformationGraph]: found %d connected component(s)\n", numOfComps);
 
+  X_T.assign(X.size(), Transformation());  // set all as identity matrix
   // 3. init kd_tree for each connected component
   std::vector<ClosestPoint> closest_meshes(numOfComps);
   std::vector<std::vector<Vector3d>> closest_points(numOfComps);
@@ -101,6 +115,7 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
   mesh->add_property(m_weights);
   mesh->add_property(m_wXids);
   //#pragma omp parallel for
+  Timer v_xtimer;
   for (int i = 0; i < v_pos.size(); ++i) {
     OpenMesh::VertexHandle vh = vHandles[i];
     int cid = mesh->property(comp_id, vh);
@@ -134,16 +149,17 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
     mesh->property(m_wXids, vh) = w_id;
 
     // add edges in DG
-    for (int j = 0; j < kp1_n_pts_min-1; ++j) {
+    for (int j = 0; j < kp1_n_pts_min - 1; ++j) {
       int j_xid = w_id[j];
-      for (int k = j + 1; k < kp1_n_pts_min-1; ++k) {
+      for (int k = j + 1; k < kp1_n_pts_min - 1; ++k) {
         int k_xid = w_id[k];
         X_edges[j_xid].insert(k_xid);
         X_edges[k_xid].insert(j_xid);
       }
     }
   }
-  printf("\t[DeformationGraph]: finish building DG\n");
+  printf("\t[DeformationGraph]: finish building DG");
+  std::cout << ", took " << v_xtimer.elapsedString() << '\n';
   //       std::vector<std::vector<double>> geo_points(numOfComps,
   //                                                   std::vector<double>());
   //   std::vector<std::vector<unsigned int>> geo_indices(
@@ -259,7 +275,7 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
   // for (int i = 0; i < sample_ids.size(); ++i) {
   //   geodesic::SurfacePoint source(
   //       &geo_mesh.vertices()[sample_ids[i]]);  // create source
-  //   all_sources.emplace_back(source);
+  //   all_sources.emplace_back(source)
   // }
   // printf("\t[DeformationGraph]: start propagate\n");
   // ////////////////////////////////////////////////////////
@@ -287,5 +303,5 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
   // Clean property from last step, Calculate k = 4 weights for each v_pos[i],
   // save in property of vertices of mesh
 
-  mesh->remove_property(comp_id);
+  // mesh->remove_property(comp_id);
 }

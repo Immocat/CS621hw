@@ -43,6 +43,7 @@
         "typeinfo": "cpp",
         "core": "cpp",
         "complex": "cpp",
-        "cstdarg": "cpp"
+        "cstdarg": "cpp",
+        "unordered_set": "cpp"
     }
 }

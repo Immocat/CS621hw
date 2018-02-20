@@ -1,16 +1,16 @@
 {
   "variant": {
-    "label": "Debug",
+    "label": "Release",
     "keywordSettings": {
-      "buildType": "debug"
+      "buildType": "release"
     },
-    "description": "Emit debug information without performing optimizations"
+    "description": "Enable optimizations, omit debug info"
   },
   "activeEnvironments": [],
   "codeModel": {
     "configurations": [
       {
-        "name": "Debug",
+        "name": "Release",
         "projects": [
           {
             "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration/build",
@@ -41,7 +41,7 @@
                     ]
                   },
                   {
-                    "compileFlags": " -std=c++11 -fopenmp -g  ",
+                    "compileFlags": " -std=c++11 -fopenmp -O3 -DNDEBUG  ",
                     "defines": [
                       "_USE_MATH_DEFINES"
                     ],
@@ -100,16 +100,20 @@
                       "GlutExaminer.hh",
                       "GlutViewer.hh",
                       "Matrix.hh",
+                      "ParallelFor.hh",
                       "Registration.hh",
                       "RegistrationViewer.hh",
+                      "Timer.hh",
                       "Transformation.hh",
                       "Vector.hh",
                       "gl.hh"
                     ]
                   },
                   {
-                    "compileFlags": " -std=c++11 -fopenmp -g   -std=gnu++11",
+                    "compileFlags": " -std=c++11 -fopenmp -O3 -DNDEBUG   -Wno-unnamed-type-template-args -std=gnu++11",
                     "defines": [
+                      "GFLAGS_IS_A_DLL=0",
+                      "GOOGLE_GLOG_DLL_DECL=",
                       "_USE_MATH_DEFINES"
                     ],
                     "includePath": [
@@ -124,6 +128,14 @@
                       },
                       {
                         "path": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration"
+                      },
+                      {
+                        "isSystem": true,
+                        "path": "/home/immocat/Documents/Github/pbrt-v3/build/src/ext/glog"
+                      },
+                      {
+                        "isSystem": true,
+                        "path": "/home/immocat/Documents/Github/pbrt-v3/src/ext/glog/src"
                       }
                     ],
                     "isGenerated": false,
@@ -145,8 +157,8 @@
                 ],
                 "fullName": "non_rigid",
                 "linkFlags": "-rdynamic",
-                "linkLanguageFlags": "-std=c++11 -fopenmp -g",
-                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libann.a /usr/local/lib/libceres.a -lspqr -ltbb -ltbbmalloc -lcholmod -lccolamd -lcamd -lcolamd -lamd -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lcxsparse -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lcxsparse -lgomp -lpthread",
+                "linkLanguageFlags": "-std=c++11 -fopenmp -O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libann.a /usr/local/lib/libceres.a /home/immocat/Documents/Github/pbrt-v3/build/src/ext/glog/libglog.a /usr/lib/x86_64-linux-gnu/libgflags.so.2.2.1 -lspqr -ltbb -ltbbmalloc -lcholmod -lccolamd -lcamd -lcolamd -lamd -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lmetis -lcxsparse -llapack -lf77blas -latlas -lsuitesparseconfig -lrt -lmetis -lcxsparse -lgomp -lpthread",
                 "linkerLanguage": "CXX",
                 "name": "non_rigid",
                 "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Non_rigid_registration",
@@ -157,7 +169,7 @@
         ]
       }
     ],
-    "cookie": "0.5246314024780954",
+    "cookie": "0.3525049772693736",
     "inReplyTo": "codemodel",
     "type": "reply"
   }

@@ -87,7 +87,7 @@ void Transformation::set_identity() {
 
 //=============================================================================
 
-Transformation Transformation::operator*(const Transformation& o) {
+Transformation Transformation::operator*(const Transformation& o) const {
   Transformation t;
 
   t.rotation_ = rotation_ * o.rotation_;
@@ -109,14 +109,14 @@ Transformation Transformation::inverse() {
 //=============================================================================
 
 // Transform point
-Vector3d Transformation::transformPoint(const Vector3d& p) {
+Vector3d Transformation::transformPoint(const Vector3d& p) const {
   return rotation_ * p + translation_;
 }
 
 //=============================================================================
 
 // Transform vector
-Vector3d Transformation::transformVector(const Vector3d& v) {
+Vector3d Transformation::transformVector(const Vector3d& v) const {
   return rotation_ * v;
 }
 
