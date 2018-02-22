@@ -45,6 +45,7 @@
 #include "EventList.hh"
 #include "GlutExaminer.hh"
 #include "Transformation.hh"
+#include <thread>
 class EventList;
 //== CLASS DEFINITION =========================================================
 

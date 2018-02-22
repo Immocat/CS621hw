@@ -1,11 +1,20 @@
 #include <ceres/ceres.h>
+#include <Eigen/Core>
 #include <algorithm>
+#include <limits>
 #include <utility>
 #include "ClosestPoint.hh"
+#include "CostFunctions.hh"
 #include "DeformationGraph.hh"
 #include "ParallelFor.hh"
 #include "RegistrationViewer.hh"
 #include "Timer.hh"
+using ceres::AutoDiffCostFunction;
+using ceres::CostFunction;
+using ceres::Problem;
+using ceres::ScaledLoss;
+using ceres::Solve;
+using ceres::Solver;
 static bool sample_valid(const Vector3d &p, const std::vector<int> &ids,
                          const std::vector<Vector3d> &_pts, float len2) {
   for (int j = 0; j < ids.size(); ++j) {
@@ -75,34 +84,101 @@ void RegistrationViewer::flag_components(OpenMesh::VPropHandleT<int> comp_id,
   }
 }
 // given deformationgraph, scale: al_reg, add Erigid cost function into problem.
-static void addRigidE(std::vector<Transformation> &newTransforms, double al_reg,
+static void addRigidE(std::vector<Transformation> &X_T, double al_reg,
                       ceres::Problem &coarse_align_problem) {
-  // TODO
+  // for each X[i]'s
+  for (int xid = 0; xid < X_T.size(); ++xid) {
+    // 1 - ai.dot(ai)
+    for (int i = 0; i < 3; ++i) {
+      CostFunction *cost_function =
+          new AutoDiffCostFunction<OneMinusSelfDotResidual, 1, 3>(
+              new OneMinusSelfDotResidual());
+      coarse_align_problem.AddResidualBlock(
+          cost_function, new ScaledLoss(NULL, al_reg, ceres::TAKE_OWNERSHIP),
+          X_T[xid].rotation_[i]);
+    }
+    CostFunction *cost_function01 =
+        new AutoDiffCostFunction<Dot3dResidual, 1, 3, 3>(new Dot3dResidual());
+    CostFunction *cost_function02 =
+        new AutoDiffCostFunction<Dot3dResidual, 1, 3, 3>(new Dot3dResidual());
+    CostFunction *cost_function12 =
+        new AutoDiffCostFunction<Dot3dResidual, 1, 3, 3>(new Dot3dResidual());
+    coarse_align_problem.AddResidualBlock(
+        cost_function01, new ScaledLoss(NULL, al_reg, ceres::TAKE_OWNERSHIP),
+        X_T[xid].rotation_[0], X_T[xid].rotation_[1]);
+    coarse_align_problem.AddResidualBlock(
+        cost_function02, new ScaledLoss(NULL, al_reg, ceres::TAKE_OWNERSHIP),
+        X_T[xid].rotation_[0], X_T[xid].rotation_[2]);
+    coarse_align_problem.AddResidualBlock(
+        cost_function12, new ScaledLoss(NULL, al_reg, ceres::TAKE_OWNERSHIP),
+        X_T[xid].rotation_[1], X_T[xid].rotation_[2]);
+  }
 }
-static void addSmoothE(const std::vector<Vector3d> &X_newPos,
+static void addSmoothE(const std::vector<Vector3d> &X_Pos,
                        const std::vector<std::unordered_set<int>> &X_edges,
-                       double al_smooth,
-                       std::vector<Transformation> &newTransforms,
+                       double al_smooth, std::vector<Transformation> &X_T,
                        ceres::Problem &coarse_align_problem) {
-  // TODO
+  // for each X[i]
+  for (int xid = 0; xid < X_Pos.size(); ++xid) {
+    const std::unordered_set<int> &X_ie(X_edges[xid]);
+    for (const int &j : X_ie) {
+      //
+      CostFunction *cost_function =
+          new AutoDiffCostFunction<SmoothResidual, 1, 3, 3, 3, 3, 3>(
+              new SmoothResidual(X_Pos[xid], X_Pos[j]));
+      coarse_align_problem.AddResidualBlock(
+          cost_function, new ScaledLoss(NULL, al_smooth, ceres::TAKE_OWNERSHIP),
+          X_T[xid].rotation_[0], X_T[xid].rotation_[1], X_T[xid].rotation_[2],
+          &(X_T[xid].translation_[0]), &(X_T[j].translation_[0]));
+    }
+  }
 }
-static void addFitE(const std::vector<Vector3d> &X_newPos,
+static void addFitE(const std::vector<Vector3d> &X_pos,
+                    std::vector<Transformation> &X_T,
                     const std::vector<Vector3d> &all_targetPoints,
                     const std::vector<Vector3d> &all_targetNormals,
                     const std::vector<std::pair<int, int>> &stPairs,
                     double al_fit, ceres::Problem &coarse_align_problem) {
   // TODO
+  double al_point = al_fit * 0.1;
+  double al_plane = al_fit;
+  for (const auto &stPair : stPairs) {
+    int xid = stPair.first;
+    int tid = stPair.second;
+    const Vector3d &xi(X_pos[xid]);
+    const Vector3d &ci(all_targetPoints[tid]);
+    const Vector3d &ni(all_targetNormals[tid]);
+    CostFunction *cost_function_point =
+        new AutoDiffCostFunction<PointResidual, 1, 3, 3, 3, 3>(
+            new PointResidual(xi, ci));
+    CostFunction *cost_function_plane =
+        new AutoDiffCostFunction<PlaneResidual, 1, 3, 3, 3, 3>(
+            new PlaneResidual(xi, ci, ni));
+    // add point energy
+    coarse_align_problem.AddResidualBlock(
+        cost_function_point,
+        new ScaledLoss(NULL, al_point, ceres::TAKE_OWNERSHIP),
+        X_T[xid].rotation_[0], X_T[xid].rotation_[1], X_T[xid].rotation_[2],
+        &(X_T[xid].translation_[0]));
+    coarse_align_problem.AddResidualBlock(
+        cost_function_plane,
+        new ScaledLoss(NULL, al_plane, ceres::TAKE_OWNERSHIP),
+        X_T[xid].rotation_[0], X_T[xid].rotation_[1], X_T[xid].rotation_[2],
+        &(X_T[xid].translation_[0]));
+  }
 }
 inline static bool converge_coarseE(double Ek, double Ekm1) {
   static const double sigma = 0.005;
-  return (std::abs(Ek - Ekm1) < sigma * Ek) ? true : false;
+  return (std::abs(Ek - Ekm1) < sigma * Ek) ||
+                 (Ek < std::numeric_limits<double>::epsilon())
+             ? true
+             : false;
 }
-static void calculate_correspondences(
-    const ClosestPoint &targetCP, DeformationGraph &DG,
-    std::vector<Vector3d> &X_newPos, std::vector<Vector3d> &X_newNormal) {
+static void calculate_correspondences(const ClosestPoint &targetCP,
+                                      DeformationGraph &DG) {
   // 1. calculate new pos and normal for each DG node
-  X_newPos.clear();
-  X_newNormal.clear();
+  std::vector<Vector3d> X_newPos;
+  std::vector<Vector3d> X_newNormal;
   DG.stPairs.clear();
   std::vector<std::pair<int, int>> candidate_pairs;
   std::vector<double> src_target_dis2;
@@ -129,11 +205,11 @@ static void calculate_correspondences(
   }
   // 3. prune
   // normals of correspondences do not deviate more than 60 degrees
-  static const double normalCompatabilityThresh = 60;
+  static const double normalCompatabilityThresh = 70;
   static const double cosineThresh =
       std::cos(normalCompatabilityThresh * M_PI / 180.0);
   // distance threshold is 3 times the median distance
-  static const double distMedianThresh = 3;
+  static const double distMedianThresh = 10;
   std::vector<double> dis2_copy = src_target_dis2;
   std::nth_element(src_target_dis2.begin(),
                    src_target_dis2.begin() + src_target_dis2.size() / 2,
@@ -147,14 +223,14 @@ static void calculate_correspondences(
   for (const std::pair<int, int> &stPair : candidate_pairs) {
     int newPosid = stPair.first;
     int tarId = stPair.second;
-    if (dis2_copy[newPosid] > distThreshold2) continue;
+    //if (dis2_copy[newPosid] > distThreshold2) continue;
     // suppose distMedian is always less than 90 degree, which means that
     // cosineThresh<=cos(theta)<=1
     //!!!!!!!!!!!!!!!!!! Here I suppose that target(openmesh calculates) normals
     //! are all normalized!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (dot_product(X_newNormal[newPosid].normalize(),
-                    DG.targetNormals[tarId]) < cosineThresh)
-      continue;
+    //if (dot_product(X_newNormal[newPosid].normalize(),
+    //                DG.targetNormals[tarId]) <= 0)
+    //  continue;
     // put into output
     DG.stPairs.emplace_back(stPair);
   }
@@ -231,42 +307,66 @@ void RegistrationViewer::coarseNonRigidAlignment(
   for (int n_out = 0; n_out < 100 && al_reg >= 0.1; ++n_out) {
     double E_km1 = 0;
     double E_k = 0;
-    for (int n_in = 0;; ++n_in) {
+    for (int n_in = 0; n_in < 100; ++n_in) {
       // ICP & prune
-      
-      std::vector<Vector3d> X_newPos;
-      std::vector<Vector3d> X_newNormal;
-      calculate_correspondences(targetCP, M_DG, X_newPos, X_newNormal);
 
-      // global optimization
+      // std::vector<Vector3d> X_newPos;
+      // std::vector<Vector3d> X_newNormal;
+      calculate_correspondences(targetCP, M_DG);
+      printf("\t[ICP]: find %d pairs\n", (int)M_DG.stPairs.size());
+
+      // global optimizatio
       ceres::Problem coarse_align_problem;
       // given deformationgraph, scale: al_reg, add Erigid cost function into
       // problem.
-      std::vector<Transformation> newTransforms(M_DG.stPairs.size());
-      addRigidE(newTransforms, al_reg, coarse_align_problem);
-      addSmoothE(X_newPos, M_DG.X_edges, al_reg * 0.1, newTransforms,
+      // std::vector<Transformation> newTransforms(M_DG.stPairs.size());
+      addRigidE(M_DG.X_T, al_reg, coarse_align_problem);
+      addSmoothE(M_DG.X, M_DG.X_edges, al_reg * 0.1, M_DG.X_T,
                  coarse_align_problem);
-      addFitE(X_newPos, M_DG.targetPoints, M_DG.targetNormals, M_DG.stPairs, al_fit,
-              coarse_align_problem);
+      addFitE(M_DG.X, M_DG.X_T, M_DG.targetPoints, M_DG.targetNormals,
+              M_DG.stPairs, al_fit, coarse_align_problem);
 
       // Solve it  based on Cholesky decomposition
-      // TODO: solve it
+      Solver::Options options;
+      options.max_num_iterations = 5;
+      //options.max_solver_time_in_seconds = 10.0;
+      options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+      options.minimizer_progress_to_stdout = false;
+      Solver::Summary summary;
+      /////////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!
+      {
+        // when optimization, do not draw
+        // std::lock_guard<std::mutex> guard(M_DG.mutex);
+        Solve(options, &coarse_align_problem, &summary);
+        glutPostRedisplay();
+      }
+      //////////////////////////////!!!!!!!!!!!!!!!!!!!!!!!
       // update E_k
-      // TODO :E_k = ceres thing
+      E_k = summary.final_cost;
+      printf(
+          "\t[Global Optimize]: out %d iters, inner %d iters, before E: %f, "
+          "after E: %f, solver_iter %d steps, takes %f second\n",
+          n_out, n_in, summary.initial_cost, E_k, summary.num_successful_steps,
+          summary.total_time_in_seconds);
       // try if converge, and not quit at first inner iter
       if (converge_coarseE(E_k, E_km1) && n_in > 0) break;
       // not converge update E_k, E_km1
       E_km1 = E_k;
       // X_T[i] = newMatrix[i]  * X_T[i] for all pairs
-      M_DG.updateTransforms(newTransforms);
+      // M_DG.updateTransforms(newTransforms);
     }
     // Great! we can relax al_reg by 10
     al_reg *= 0.1;
   }
+  // 6. transform each vertex to new pos
 
-  // 6. Based on graph nodes' transform and weights, get new vertex transform
+  Timer transform_vn_timer;
+  M_DG.transformVandN();
+  printf("\t[transformVandN]: took %s\n",
+         transform_vn_timer.elapsedString().c_str());
 
-  // 7. transform each vertex to new pos
+  // 7. clean
+  src_mesh->remove_property(comp_id);
 }
 
 // fineLiearAlignment M to S

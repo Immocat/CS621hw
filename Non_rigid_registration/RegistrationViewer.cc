@@ -45,7 +45,7 @@
 #include <unordered_set>
 #include <vector>
 #include "ClosestPoint.hh"
-#include "Registration.hh"
+//#include "Registration.hh"
 #include "gl.hh"
 //== IMPLEMENTATION ==========================================================
 // template <typename Elem>
@@ -273,9 +273,9 @@ void RegistrationViewer::update_face_indices(
   indices.reserve(mesh.n_faces() * 3);
 
   for (; f_it != f_end; ++f_it) {
-    indices.push_back((fv_it = mesh.cfv_iter(f_it)).handle().idx());
-    indices.push_back((++fv_it).handle().idx());
-    indices.push_back((++fv_it).handle().idx());
+    indices.push_back((*(fv_it = mesh.cfv_iter(*f_it))).idx());
+    indices.push_back((*(++fv_it)).idx());
+    indices.push_back((*(++fv_it)).idx());
   }
 }
 
@@ -306,14 +306,21 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
 
   // display deformation graph
   if (draw_DG) {
+    //std::lock_guard<std::mutex> guard(M_DG.mutex);
+
     // draw sumplepoints
     glEnable(GL_COLOR_MATERIAL);
     // orange
     glColor3f(1, 0.64453125, 0);
+    std::vector<Vector3d> X_transed;
+    X_transed.reserve(M_DG.X.size());
+    for (int i = 0; i < M_DG.X.size(); ++i) {
+      X_transed.emplace_back(M_DG.X_T[i].transformPoint(M_DG.X[i]));
+    }
     for (int i = 0; i < (int)M_DG.X.size(); ++i) {
       glPushMatrix();
-      const Vector3d &pt = M_DG.X[i];
-      // pt = transformations_[currIndex_].transformPoint(pt);
+      const Vector3d &pt(X_transed[i]);
+      // Vector3d pt(M_DG.X_T[i].transformPoint(M_DG.X[i]));
       glTranslatef(pt[0], pt[1], pt[2]);
       glutSolidSphere(averageVertexDistance_ * 0.5, 10, 10);
       glPopMatrix();
@@ -322,10 +329,10 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
     glLineWidth(averageVertexDistance_ * 0.5);
     glBegin(GL_LINES);
     for (int i = 0; i < (int)M_DG.X.size(); ++i) {
-      const Vector3d &pt(M_DG.X[i]);
+      const Vector3d &pt(X_transed[i]);
       for (const int &j : M_DG.X_edges[i]) {
         glVertex3f(pt[0], pt[1], pt[2]);
-        glVertex3f(M_DG.X[j][0], M_DG.X[j][1], M_DG.X[j][2]);
+        glVertex3f(X_transed[j][0], X_transed[j][1], X_transed[j][2]);
       }
     }
     glEnd();
@@ -398,7 +405,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
     }
     case 'n': {
       // sampledPoints_.clear();
-      if (S_id + 1 >= filenames.size()) {
+      if (S_id >= filenames.size()) {
         printf("All target processed\n");
         break;
       }
@@ -406,6 +413,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
         printf("Cannot load mesh %s.\n", filenames[S_id - 1].c_str());
         break;
       }
+      improveMesh(S, nullptr, S_indices);
       glutPostRedisplay();
       break;
     }
@@ -416,7 +424,9 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
       }
     }
     case 'c': {
-      coarseNonRigidAlignment(&M, M_indices, S);
+      std::thread *th =
+          new std::thread([&]() { coarseNonRigidAlignment(&M, M_indices, S); });
+      // coarseNonRigidAlignment(&M, M_indices, S);
       glutPostRedisplay();
       break;
     }
@@ -598,8 +608,8 @@ float RegistrationViewer::get_average_vertex_distance(const Mesh &_mesh) const {
 
   Mesh::ConstHalfedgeIter he_it = _mesh.halfedges_begin();
   for (; he_it != _mesh.halfedges_end(); ++he_it) {
-    OpenMesh::Vec3f p = _mesh.point(_mesh.from_vertex_handle(he_it.handle()));
-    OpenMesh::Vec3f q = _mesh.point(_mesh.to_vertex_handle(he_it.handle()));
+    OpenMesh::Vec3f p = _mesh.point(_mesh.from_vertex_handle(*he_it));
+    OpenMesh::Vec3f q = _mesh.point(_mesh.to_vertex_handle(*he_it));
     float edgeLength = sqrt((p - q) | (p - q));
     accDist += edgeLength;
     accCount++;

@@ -5,6 +5,8 @@
 #include <vector>
 #include "Transformation.hh"
 #include "Vector.hh"
+#include <thread>
+#include <mutex>
 class DeformationGraph {
   typedef OpenMesh::TriMesh_ArrayKernelT<> Mesh;
 
@@ -24,7 +26,9 @@ class DeformationGraph {
             const std::vector<int> &sample_ids,
             const std::vector<unsigned int> &src_indices, int numOfComps,
             OpenMesh::VPropHandleT<int> comp_id);
-  void updateTransforms(const std::vector<Transformation> &newTransforms);
+  // based on DG and weights, transform mesh's vertices and normals
+  void transformVandN();
+  // void updateTransforms(const std::vector<Transformation> &newTransforms);
   // void clear(){
   //   X.clear();
   //   X_edges.clear();
@@ -43,6 +47,9 @@ class DeformationGraph {
   Mesh *m_mesh;
   OpenMesh::VPropHandleT<OpenMesh::Vec4d> m_weights;
   OpenMesh::VPropHandleT<OpenMesh::Vec4i> m_wXids;
+public:
+  // thread safe mutex
+  //std::mutex mutex;
 
  private:
   // void flag_components(OpenMesh::VPropHandleT<int> comp_id, Mesh *mesh,

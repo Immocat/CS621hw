@@ -30,7 +30,6 @@
 //
 //=============================================================================
 
-//#include <geodesic/geodesic_algorithm_exact.h>
 #include <cstdio>
 #include <fstream>
 #include "RegistrationViewer.hh"

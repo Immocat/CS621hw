@@ -170,9 +170,9 @@ void RegistrationViewer::improveMesh(Mesh& mesh, EventList* eventList,
   for (Mesh::EdgeIter e_it = mesh.edges_begin(); e_it != mesh.edges_end();
        ++e_it, ++edge_num) {
     OpenMesh::Vec3f p =
-        mesh.point(mesh.to_vertex_handle(mesh.halfedge_handle(e_it, 0)));
+        mesh.point(mesh.to_vertex_handle(mesh.halfedge_handle(*e_it, 0)));
     OpenMesh::Vec3f q =
-        mesh.point(mesh.from_vertex_handle(mesh.halfedge_handle(e_it, 0)));
+        mesh.point(mesh.from_vertex_handle(mesh.halfedge_handle(*e_it, 0)));
     float edgeLength = (p - q).norm();
     // mesh.property(norm)
     ave_edge_norm += edgeLength;

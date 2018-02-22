@@ -59,15 +59,15 @@ DeformationGraph::DeformationGraph(
 //     }
 //   }
 // }
-void DeformationGraph::updateTransforms(
-    const std::vector<Transformation> &newTransforms) {
-  // TODO
-  for (int i = 0; i < stPairs.size(); ++i) {
-    int xid = stPairs[i].first;
-    // X_T[xid] = newMatrix[i]  * X_T[xid] , update for all pairs
-    X_T[xid] = newTransforms[i] * X_T[xid];
-  }
-}
+// void DeformationGraph::updateTransforms(
+//     const std::vector<Transformation> &newTransforms) {
+//   // TODO
+//   for (int i = 0; i < stPairs.size(); ++i) {
+//     int xid = stPairs[i].first;
+//     // X_T[xid] = newMatrix[i]  * X_T[xid] , update for all pairs
+//     X_T[xid] = newTransforms[i] * X_T[xid];
+//   }
+// }
 
 void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
                             const std::vector<OpenMesh::VertexHandle> &vHandles,
@@ -75,6 +75,8 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
                             const std::vector<unsigned int> &src_indices,
                             int numOfComps,
                             OpenMesh::VPropHandleT<int> comp_id) {
+  // when init DG, make it thread safe
+  //std::lock_guard<std::mutex> guard(mutex);
   // 1. get all graph nodes
   m_mesh = mesh;
   static const int k = 4;
@@ -90,8 +92,8 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
     X_normal.emplace_back(n[0], n[1], n[2]);
   }
   X_edges.assign(X.size(), std::unordered_set<int>());
-
   X_T.assign(X.size(), Transformation());  // set all as identity matrix
+
   // 3. init kd_tree for each connected component
   std::vector<ClosestPoint> closest_meshes(numOfComps);
   std::vector<std::vector<Vector3d>> closest_points(numOfComps);
@@ -304,4 +306,28 @@ void DeformationGraph::init(const std::vector<Vector3d> &v_pos, Mesh *mesh,
   // save in property of vertices of mesh
 
   // mesh->remove_property(comp_id);
+}
+void DeformationGraph::transformVandN() {
+  // based on DG and weights, transform mesh's vertices
+  //std::lock_guard<std::mutex> guard(mutex);
+  Mesh::VertexIter v_it(m_mesh->vertices_begin()),
+      v_end(m_mesh->vertices_end());
+  for (; v_it != v_end; ++v_it) {
+    const OpenMesh::Vec4d &weights = m_mesh->property(m_weights, *v_it);
+    const OpenMesh::Vec4i &xids = m_mesh->property(m_wXids, *v_it);
+    const OpenMesh::Vec3f &v = m_mesh->point(*v_it);
+    Vector3d vj(v[0], v[1], v[2]);
+    // calculate new pos for vj
+    Vector3d p(0, 0, 0);
+    for (int i = 0; i < 4; ++i) {
+      if (xids[i] == -1) continue;
+      const Vector3d &xi = X[xids[i]];
+      const Matrix3x3d &Ai = X_T[xids[i]].rotation_;
+      const Vector3d &bi = X_T[xids[i]].translation_;
+      p += weights[i] * (Ai * (vj - xi) + xi + bi);
+    }
+    m_mesh->point(*v_it) = OpenMesh::Vec3f(p[0], p[1], p[2]);
+  }
+  // update geometry normal
+  m_mesh->update_normals();
 }

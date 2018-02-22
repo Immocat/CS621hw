@@ -95,13 +95,13 @@
                     "isGenerated": false,
                     "sources": [
                       "ClosestPoint.hh",
+                      "CostFunctions.hh",
                       "DeformationGraph.hh",
                       "EventList.hh",
                       "GlutExaminer.hh",
                       "GlutViewer.hh",
                       "Matrix.hh",
                       "ParallelFor.hh",
-                      "Registration.hh",
                       "RegistrationViewer.hh",
                       "Timer.hh",
                       "Transformation.hh",
@@ -148,7 +148,6 @@
                       "GlutViewer.cc",
                       "ImproveMesh.cc",
                       "Non_rigid_registration.cc",
-                      "Registration.cc",
                       "RegistrationViewer.cc",
                       "Transformation.cc",
                       "registrationview.cc"
@@ -169,7 +168,7 @@
         ]
       }
     ],
-    "cookie": "0.3525049772693736",
+    "cookie": "0.8985905756839245",
     "inReplyTo": "codemodel",
     "type": "reply"
   }
