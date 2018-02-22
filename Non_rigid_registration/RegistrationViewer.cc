@@ -95,6 +95,8 @@ RegistrationViewer::RegistrationViewer(const char *_title, int _width,
   mode_ = VIEW;
 
   draw_DG = true;
+
+  draw_fineAlign_intermediate = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -104,6 +106,25 @@ RegistrationViewer::~RegistrationViewer() {}
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+bool RegistrationViewer::build_target_bvh() {
+  // try to build bvh for target
+
+  S_BVH = nanort::BVHAccel<float>();
+  nanort::TriangleMesh<float> triangle_mesh(
+      (const float *)S.points(), S_indices.data(), sizeof(float) * 3);
+  nanort::TriangleSAHPred<float> triangle_pred(
+      (const float *)S.points(), S_indices.data(), sizeof(float) * 3);
+  nanort::BVHBuildOptions<float> build_options;  // Use default option
+  if (!S_BVH.Build(S.n_faces(), triangle_mesh, triangle_pred, build_options)) {
+    printf("\t[Build Target BVH]: build BVH failed\n");
+    return false;
+  }
+  // print bvh info
+  nanort::BVHBuildStatistics stats = S_BVH.GetStatistics();
+  printf(
+      "\t[BVH statistics]: %d leaf nodes, %d branch nodes, max tree depth %d\n",
+      stats.num_leaf_nodes, stats.num_branch_nodes, stats.max_tree_depth);
+}
 
 bool RegistrationViewer::init(const std::vector<std::string> &_filenames) {
   if (_filenames.size() < 2) {
@@ -127,6 +148,8 @@ bool RegistrationViewer::init(const std::vector<std::string> &_filenames) {
   // improve Mesh
   improveMesh(M, &m_eventList, M_indices);
   improveMesh(S, nullptr, S_indices);
+  // build BVH for S
+  // build_target_bvh();
 
   // get average vertex radius for rednering sampled point
   averageVertexDistance_ = get_average_vertex_distance(M);
@@ -254,9 +277,10 @@ bool RegistrationViewer::loadTargetMesh(Mesh &mesh, const std::string &filename,
 
   mesh.update_normals();
   update_face_indices(mesh, indices);
-  // info
+  // load info
   std::cerr << "[Load Mesh]: " << filename << ": " << mesh.n_vertices()
             << " vertices, " << mesh.n_faces() << " faces\n";
+
   // transformations_.push_back(Transformation());
   return true;
 }
@@ -306,7 +330,7 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
 
   // display deformation graph
   if (draw_DG) {
-    //std::lock_guard<std::mutex> guard(M_DG.mutex);
+    // std::lock_guard<std::mutex> guard(M_DG.mutex);
 
     // draw sumplepoints
     glEnable(GL_COLOR_MATERIAL);
@@ -431,7 +455,7 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
       break;
     }
     case 'f': {
-      fineLiearAlignment(M, S);
+      fineLinearAlignment(M, S, S_indices);
       glutPostRedisplay();
       break;
     }

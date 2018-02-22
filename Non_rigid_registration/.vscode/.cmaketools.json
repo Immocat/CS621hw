@@ -102,6 +102,7 @@
                       "GlutViewer.hh",
                       "Matrix.hh",
                       "ParallelFor.hh",
+                      "Point_Hash_Grid_Searcher3.hh",
                       "RegistrationViewer.hh",
                       "Timer.hh",
                       "Transformation.hh",
@@ -148,6 +149,7 @@
                       "GlutViewer.cc",
                       "ImproveMesh.cc",
                       "Non_rigid_registration.cc",
+                      "Point_Hash_Grid_Searcher3.cc",
                       "RegistrationViewer.cc",
                       "Transformation.cc",
                       "registrationview.cc"
@@ -168,7 +170,7 @@
         ]
       }
     ],
-    "cookie": "0.8985905756839245",
+    "cookie": "0.3612592380204891",
     "inReplyTo": "codemodel",
     "type": "reply"
   }

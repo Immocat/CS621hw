@@ -7,6 +7,7 @@
 #include "CostFunctions.hh"
 #include "DeformationGraph.hh"
 #include "ParallelFor.hh"
+#include "Point_Hash_Grid_Searcher3.hh"
 #include "RegistrationViewer.hh"
 #include "Timer.hh"
 using ceres::AutoDiffCostFunction;
@@ -15,23 +16,29 @@ using ceres::Problem;
 using ceres::ScaledLoss;
 using ceres::Solve;
 using ceres::Solver;
-static bool sample_valid(const Vector3d &p, const std::vector<int> &ids,
-                         const std::vector<Vector3d> &_pts, float len2) {
-  for (int j = 0; j < ids.size(); ++j) {
-    if (length2(p - _pts[ids[j]]) < len2) return false;
-  }
-  return true;
-}
+// static bool sample_valid(const Vector3d &p, const std::vector<int> &ids,
+//                          const std::vector<Vector3d> &_pts, float len2) {
+//   for (int j = 0; j < ids.size(); ++j) {
+//     if (length2(p - _pts[ids[j]]) < len2) return false;
+//   }
+//   return true;
+// }
 void RegistrationViewer::subsample(const std::vector<Vector3d> &pts,
                                    std::vector<int> &sample_ids,
                                    const double avgDis) {
   //
   if (pts.size() == 0) return;
   double r_threshold = 4 * avgDis;
-  double r2 = r_threshold * r_threshold;
+  //double r2 = r_threshold * r_threshold;
+
+  PointHashGridSearcher3 searcher;
   for (int i = 0; i < pts.size(); ++i) {
-    if (sample_valid(pts[i], sample_ids, pts, r2)) {
+    // if (sample_valid(pts[i], sample_ids, pts, r2)) {
+    //   sample_ids.push_back(i);
+    // }
+    if (!searcher.hasNearbyPoint(pts[i],r_threshold)) {
       sample_ids.push_back(i);
+      searcher.add(pts[i]);
     }
   }
 }
@@ -223,12 +230,12 @@ static void calculate_correspondences(const ClosestPoint &targetCP,
   for (const std::pair<int, int> &stPair : candidate_pairs) {
     int newPosid = stPair.first;
     int tarId = stPair.second;
-    //if (dis2_copy[newPosid] > distThreshold2) continue;
+    // if (dis2_copy[newPosid] > distThreshold2) continue;
     // suppose distMedian is always less than 90 degree, which means that
     // cosineThresh<=cos(theta)<=1
     //!!!!!!!!!!!!!!!!!! Here I suppose that target(openmesh calculates) normals
     //! are all normalized!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //if (dot_product(X_newNormal[newPosid].normalize(),
+    // if (dot_product(X_newNormal[newPosid].normalize(),
     //                DG.targetNormals[tarId]) <= 0)
     //  continue;
     // put into output
@@ -288,6 +295,7 @@ void RegistrationViewer::coarseNonRigidAlignment(
 
   printf("\t[Subsample]: sampled %d vertices, took %s\n",
          (int)srcSampleIds.size(), subsample_elapseString.c_str());
+  glutPostRedisplay();
   // 3. Build deformation graph
   M_DG.init(srcPoints, src_mesh, srcVHandles, srcSampleIds, src_indices,
             numOfComps, comp_id);
@@ -329,7 +337,7 @@ void RegistrationViewer::coarseNonRigidAlignment(
       // Solve it  based on Cholesky decomposition
       Solver::Options options;
       options.max_num_iterations = 5;
-      //options.max_solver_time_in_seconds = 10.0;
+      // options.max_solver_time_in_seconds = 10.0;
       options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
       options.minimizer_progress_to_stdout = false;
       Solver::Summary summary;
@@ -370,8 +378,80 @@ void RegistrationViewer::coarseNonRigidAlignment(
 }
 
 // fineLiearAlignment M to S
-void RegistrationViewer::fineLiearAlignment(Mesh &src_mesh,
-                                            const Mesh &target_mesh) {
+void RegistrationViewer::fineLinearAlignment(
+    Mesh &src_mesh, const Mesh &target_mesh,
+    const std::vector<unsigned int> &target_indices) {
   // given a source mesh, transform it to tartget_mesh's pos (finely)
   // no topology changes happen here.
+  printf("[Fine Linear Alignment]: Start\n");
+  build_target_bvh();
+  // get source mesh
+  std::vector<Vector3d> srcPoints;
+  std::vector<OpenMesh::VertexHandle> srcVHandles;
+  std::vector<Vector3d> srcNormals;
+  // std::vector<Vector3d> srcNormals;
+  get_points(src_mesh, srcPoints, srcVHandles);
+  // get_normals(src_mesh, srcNormals);
+  // std::vector<Vector3d> targetPoints(srcPoints.size());
+
+  OpenMesh::VPropHandleT<Vector3d> targetPoints;
+  src_mesh.add_property(targetPoints);
+  src_mesh.add_property(M_fineAlignTrans);
+
+  draw_fineAlign_intermediate = true;
+  for (int i = 0; i < srcPoints.size(); ++i) {
+    // init fine alignment trans
+    src_mesh.property(M_fineAlignTrans, srcVHandles[i]) = Transformation();
+  }
+  ////////////////////////////////////////////
+  // TODO: real alignment happens here
+  // for each vertex on src_mesh, trace a undirected ray to get closet point on
+  // target mesh, also init M_fineAlignTrans to I and (0,0,0)
+  // nanort::BVHTraceOptions trace_options;  // default
+  nanort::TriangleIntersector<float, nanort::TriangleIntersection<float>>
+      triangle_intersecter((const float *)target_mesh.points(),
+                           target_indices.data(), sizeof(float) * 3);
+  Timer trace_timer;
+  static const float tFar = 1.0e+30f;
+  ParallelFor(0, (int)srcPoints.size(), [&](int i) {
+    nanort::Ray<float> ray;
+    ray.min_t = 0.0f;
+    ray.max_t = tFar;
+    ray.org[0] = srcPoints[i][0];
+    ray.org[1] = srcPoints[i][1];
+    ray.org[2] = srcPoints[i][2];
+
+    const OpenMesh::Vec3f &cur_normal(src_mesh.normal(srcVHandles[i]));
+    ray.dir[0] = cur_normal[0];
+    ray.dir[1] = cur_normal[1];
+    ray.dir[2] = cur_normal[2];
+    nanort::TriangleIntersection<float> isect;
+    bool hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
+    ray.dir[0] = -cur_normal[0];
+    ray.dir[1] = -cur_normal[1];
+    ray.dir[2] = -cur_normal[2];
+    hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
+  });
+  // for (int i = 0; i < srcPoints.size(); ++i) {
+  //   nanort::Ray<float> ray;
+  //   ray.min_t = 0.0f;
+  //   ray.max_t = tFar;
+  //   ray.org[0] = srcPoints[i][0];
+  //   ray.org[1] = srcPoints[i][1];
+  //   ray.org[2] = srcPoints[i][2];
+
+  //   const OpenMesh::Vec3f &cur_normal(src_mesh.normal(srcVHandles[i]));
+  //   ray.dir[0] = cur_normal[0];
+  //   ray.dir[1] = cur_normal[1];
+  //   ray.dir[2] = cur_normal[2];
+  //   nanort::TriangleIntersection<float> isect;
+  //   bool hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
+  // }
+  printf("\t[trace ray]: %s\n", trace_timer.elapsedString().c_str());
+  ////////////////////////////////////////////
+  draw_fineAlign_intermediate = false;
+
+  // clean up
+  src_mesh.remove_property(targetPoints);
+  src_mesh.remove_property(M_fineAlignTrans);
 }

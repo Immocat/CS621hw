@@ -41,11 +41,12 @@
 //== INCLUDES =================================================================
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <thread>
 #include "DeformationGraph.hh"
 #include "EventList.hh"
 #include "GlutExaminer.hh"
 #include "Transformation.hh"
-#include <thread>
+#include "nanort.h"
 class EventList;
 //== CLASS DEFINITION =========================================================
 
@@ -84,7 +85,7 @@ class RegistrationViewer : public GlutExaminer {
   void get_normals(const Mesh& mesh, std::vector<Vector3d>& normals);
 
   /// get border vertices of mesh
-  void get_borders(const Mesh& mesh,std::vector<bool>& isBorders);
+  void get_borders(const Mesh& mesh, std::vector<bool>& isBorders);
 
   /// get average vertex distance
   float get_average_vertex_distance(const Mesh& mesh) const;
@@ -107,7 +108,8 @@ class RegistrationViewer : public GlutExaminer {
                                const Mesh& target_mesh);
 
   // fineLiearAlignment M to S
-  void fineLiearAlignment(Mesh& src_mesh, const Mesh& target_mesh);
+  void fineLinearAlignment(Mesh& src_mesh, const Mesh& target_mesh,
+                          const std::vector<unsigned int>& target_indices);
 
   // TODO: need more parameters
   // calculate signed distance
@@ -131,6 +133,8 @@ class RegistrationViewer : public GlutExaminer {
   void flag_components(OpenMesh::VPropHandleT<int> comp_id, Mesh* mesh,
                        int& numOfComps);
 
+  bool build_target_bvh();
+
  protected:
   enum Mode { VIEW, MOVE } mode_;
 
@@ -140,11 +144,20 @@ class RegistrationViewer : public GlutExaminer {
   std::vector<unsigned int> M_indices;
   std::vector<unsigned int> S_indices;
   DeformationGraph M_DG;
+  // used for bvh
+  nanort::BVHAccel<float> S_BVH;
+  // used for fine Alienment
+  OpenMesh::VPropHandleT<Transformation> M_fineAlignTrans;
+
+  // nanort::TriangleMesh<float> S_rtMesh;
+  // nanort::TriangleSAHPred<float> S_trianglepred;
+  //
   int S_id;
   Mesh M;
   Mesh S;
   EventList m_eventList;
   bool draw_DG;
+  bool draw_fineAlign_intermediate;
 };
 
 //=============================================================================

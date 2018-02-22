@@ -50,6 +50,8 @@ typedef Vector<float, 1> Vector1f;
 typedef Vector<float, 2> Vector2f;
 typedef Vector<float, 3> Vector3f;
 typedef Vector<float, 4> Vector4f;
+// only for save 3 ints
+typedef Vector<int, 3> Vector3i;
 
 /**
  * simple Vector class
