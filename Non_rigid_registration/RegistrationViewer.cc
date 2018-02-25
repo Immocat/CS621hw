@@ -97,11 +97,22 @@ RegistrationViewer::RegistrationViewer(const char *_title, int _width,
   draw_DG = true;
 
   draw_fineAlign_intermediate = false;
+
+  draw_S = true;
+
+  draw_M = true;
 }
 
 //-----------------------------------------------------------------------------
 
-RegistrationViewer::~RegistrationViewer() {}
+RegistrationViewer::~RegistrationViewer() {
+  // wait for all thread
+  // for(std::thread & thread:thread_pool){
+  //   if(thread.joinable()){
+  //     thread.join();
+  //   }
+  // }
+}
 
 //-----------------------------------------------------------------------------
 
@@ -165,6 +176,7 @@ bool RegistrationViewer::init(const std::vector<std::string> &_filenames) {
     bbMax.maximize(M.point(*v_it));
     gravity += M.point(*v_it);
   }
+  m_bbDiagnol = (bbMax - bbMin).length();
   if (M.n_vertices() != 0) gravity /= float(M.n_vertices());
   set_scene(gravity, 0.3 * (bbMin - bbMax).norm());
 
@@ -325,8 +337,8 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
     GlutExaminer::draw(_draw_mode);
     return;
   }
-  draw(M, M_indices, OpenMesh::Vec3f(0.1, 0.5, 0.1), _draw_mode);
-  draw(S, S_indices, OpenMesh::Vec3f(0.5, 0.5, 0.5), _draw_mode);
+  if (draw_M) drawM(M, M_indices, OpenMesh::Vec3f(0.1, 0.5, 0.1), _draw_mode);
+  if (draw_S) drawS(S, S_indices, OpenMesh::Vec3f(0.5, 0.5, 0.5), _draw_mode);
 
   // display deformation graph
   if (draw_DG) {
@@ -366,25 +378,54 @@ void RegistrationViewer::draw(const std::string &_draw_mode) {
 
 //-----------------------------------------------------------------------------
 
-void RegistrationViewer::draw(const Mesh &mesh,
-                              const std::vector<unsigned int> &indices,
-                              const OpenMesh::Vec3f &color,
-                              const std::string &_draw_mode) {
+void RegistrationViewer::drawM(const Mesh &mesh,
+                               const std::vector<unsigned int> &indices,
+                               const OpenMesh::Vec3f &color,
+                               const std::string &_draw_mode) {
   glPushMatrix();
   // apply transformation matrix of scan
   // transformations_[index].apply_gl();
   if (_draw_mode == "Wireframe") {
     //
+    std::lock_guard<std::mutex> lock(draw_finealign_mutex);
+
     glDisable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glColor3f(color[0], color[1], color[2]);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
-    GL::glVertexPointer(mesh.points());
-    GL::glNormalPointer(mesh.vertex_normals());
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
-                   &(indices[0]));
+    if (draw_fineAlign_intermediate) {
+      std::vector<Vector3d> transedPos;
+      std::vector<Vector3d> transedNormal;
+      transedPos.reserve(mesh.n_vertices());
+      transedNormal.reserve(mesh.n_vertices());
+
+      Mesh::ConstVertexIter v_it(mesh.vertices_begin()),
+          v_end(mesh.vertices_end());
+      // transform
+      for (; v_it != v_end; ++v_it) {
+        Vec3f p = mesh.point(*v_it);
+        Vec3f n = mesh.normal(*v_it);
+        const Transformation &trans(mesh.property(M_fineAlignTrans, *v_it));
+        transedPos.emplace_back(
+            trans.transformPoint(Vector3d(p[0], p[1], p[2])));
+        transedNormal.emplace_back(
+            trans.transformVector(Vector3d(n[0], n[1], n[2])));
+      }
+      // draw
+
+      ::glVertexPointer(3, GL_DOUBLE, 0, transedPos.data());
+      ::glNormalPointer(GL_DOUBLE, 0, transedNormal.data());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+
+    } else {
+      GL::glVertexPointer(mesh.points());
+      GL::glNormalPointer(mesh.vertex_normals());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisable(GL_COLOR_MATERIAL);
@@ -397,12 +438,122 @@ void RegistrationViewer::draw(const Mesh &mesh,
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
-    GL::glVertexPointer(mesh.points());
-    GL::glNormalPointer(mesh.vertex_normals());
+    std::lock_guard<std::mutex> lock(draw_finealign_mutex);
 
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
-                   &(indices[0]));
+    if (draw_fineAlign_intermediate) {
+      //
+      std::vector<Vector3d> transedPos;
+      std::vector<Vector3d> transedNormal;
+      transedPos.reserve(mesh.n_vertices());
+      transedNormal.reserve(mesh.n_vertices());
 
+      Mesh::ConstVertexIter v_it(mesh.vertices_begin()),
+          v_end(mesh.vertices_end());
+      // transform
+      for (; v_it != v_end; ++v_it) {
+        Vec3f p = mesh.point(*v_it);
+        Vec3f n = mesh.normal(*v_it);
+        const Transformation &trans(mesh.property(M_fineAlignTrans, *v_it));
+        transedPos.emplace_back(
+            trans.transformPoint(Vector3d(p[0], p[1], p[2])));
+        transedNormal.emplace_back(
+            trans.transformVector(Vector3d(n[0], n[1], n[2])));
+      }
+      // draw
+
+      ::glVertexPointer(3, GL_DOUBLE, 0, transedPos.data());
+      ::glNormalPointer(GL_DOUBLE, 0, transedNormal.data());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+    } else {
+      GL::glVertexPointer(mesh.points());
+      GL::glNormalPointer(mesh.vertex_normals());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_COLOR_MATERIAL);
+  }
+  glPopMatrix();
+
+  // draw pairs
+  if (draw_fineAlign_intermediate) {
+    // std::lock_guard<std::mutex> guard(M_DG.mutex);
+
+    // draw sumplepoints
+    glEnable(GL_COLOR_MATERIAL);
+    // orange
+    glColor3f(1, 0.64453125, 0);
+
+    // TODO: draw DG edges
+    glLineWidth(averageVertexDistance_ * 0.5);
+    glBegin(GL_LINES);
+    // for (int i = 0; i < (int)M_DG.X.size(); ++i) {
+    //   const Vector3d &pt(X_transed[i]);
+    //   for (const int &j : M_DG.X_edges[i]) {
+    //     glVertex3f(pt[0], pt[1], pt[2]);
+    //     glVertex3f(X_transed[j][0], X_transed[j][1], X_transed[j][2]);
+    //   }
+    // }
+    Mesh::ConstVertexIter v_it(mesh.vertices_begin()),
+        v_end(mesh.vertices_end());
+    for (; v_it != v_end; ++v_it) {
+      // pruned
+      if (!mesh.property(hasTarget, *v_it)) continue;
+
+      const OpenMesh::Vec3f &p = mesh.point(*v_it);
+      const Transformation &trans = mesh.property(M_fineAlignTrans, *v_it);
+      const Vector3d &ci = mesh.property(targetPoints, *v_it);
+      Vector3d pos(p[0], p[1], p[2]);
+      pos = trans.transformPoint(pos);
+      glVertex3f(pos[0], pos[1], pos[2]);
+      glVertex3f(ci[0], ci[1], ci[2]);
+    }
+
+    glEnd();
+    glDisable(GL_COLOR_MATERIAL);
+  }
+}
+void RegistrationViewer::drawS(const Mesh &mesh,
+                               const std::vector<unsigned int> &indices,
+                               const OpenMesh::Vec3f &color,
+                               const std::string &_draw_mode) {
+  glPushMatrix();
+  // apply transformation matrix of scan
+  // transformations_[index].apply_gl();
+  if (_draw_mode == "Wireframe") {
+    //
+    glDisable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColor3f(color[0], color[1], color[2]);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    {
+      GL::glVertexPointer(mesh.points());
+      GL::glNormalPointer(mesh.vertex_normals());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_COLOR_MATERIAL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  } else if (_draw_mode == "Solid Smooth") {
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
+    glColor3f(color[0], color[1], color[2]);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    {
+      GL::glVertexPointer(mesh.points());
+      GL::glNormalPointer(mesh.vertex_normals());
+      glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+                     &(indices[0]));
+    }
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisable(GL_COLOR_MATERIAL);
@@ -410,7 +561,6 @@ void RegistrationViewer::draw(const Mesh &mesh,
 
   glPopMatrix();
 }
-
 //-----------------------------------------------------------------------------
 
 void RegistrationViewer::keyboard(int key, int x, int y) {
@@ -447,15 +597,27 @@ void RegistrationViewer::keyboard(int key, int x, int y) {
         break;
       }
     }
+    case ';': {
+      draw_S = !draw_S;
+      glutPostRedisplay();
+      break;
+    }
+    case '.': {
+      draw_M = !draw_M;
+      glutPostRedisplay();
+      break;
+    }
     case 'c': {
-      std::thread *th =
-          new std::thread([&]() { coarseNonRigidAlignment(&M, M_indices, S); });
+      thread_pool.emplace_back(
+          [&]() { coarseNonRigidAlignment(&M, M_indices, S); });
       // coarseNonRigidAlignment(&M, M_indices, S);
       glutPostRedisplay();
       break;
     }
     case 'f': {
-      fineLinearAlignment(M, S, S_indices);
+       thread_pool.emplace_back([&]() { fineLinearAlignment(M, S, S_indices);
+       });
+      //fineLinearAlignment(M, S, S_indices);
       glutPostRedisplay();
       break;
     }

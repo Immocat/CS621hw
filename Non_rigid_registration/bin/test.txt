@@ -1,3 +1,3 @@
-/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000060.obj
-/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000061.obj
+/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000020.obj
+/home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000021.obj
 /home/immocat/Documents/Github/ImmoPBS/build/sph_example/obj/frame_000015.obj

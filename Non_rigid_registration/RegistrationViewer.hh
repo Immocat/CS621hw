@@ -41,6 +41,7 @@
 //== INCLUDES =================================================================
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <atomic>
 #include <thread>
 #include "DeformationGraph.hh"
 #include "EventList.hh"
@@ -71,9 +72,11 @@ class RegistrationViewer : public GlutExaminer {
 
  private:
   /// draw the mesh in scene
-  void draw(const Mesh& mesh, const std::vector<unsigned int>& indices,
+  void drawM(const Mesh& mesh, const std::vector<unsigned int>& indices,
             const OpenMesh::Vec3f& color, const std::string& _draw_mode);
 
+  void drawS(const Mesh& mesh, const std::vector<unsigned int>& indices,
+            const OpenMesh::Vec3f& color, const std::string& _draw_mode);
   /// clean mesh by removing "bad" triangles
   void clean_mesh(Mesh& mesh);
 
@@ -109,7 +112,7 @@ class RegistrationViewer : public GlutExaminer {
 
   // fineLiearAlignment M to S
   void fineLinearAlignment(Mesh& src_mesh, const Mesh& target_mesh,
-                          const std::vector<unsigned int>& target_indices);
+                           const std::vector<unsigned int>& target_indices);
 
   // TODO: need more parameters
   // calculate signed distance
@@ -148,7 +151,9 @@ class RegistrationViewer : public GlutExaminer {
   nanort::BVHAccel<float> S_BVH;
   // used for fine Alienment
   OpenMesh::VPropHandleT<Transformation> M_fineAlignTrans;
-
+  OpenMesh::VPropHandleT<Vector3d> targetPoints;
+  OpenMesh::VPropHandleT<bool> hasTarget;
+  OpenMesh::VPropHandleT<float> displacement;
   // nanort::TriangleMesh<float> S_rtMesh;
   // nanort::TriangleSAHPred<float> S_trianglepred;
   //
@@ -157,7 +162,12 @@ class RegistrationViewer : public GlutExaminer {
   Mesh S;
   EventList m_eventList;
   bool draw_DG;
+  bool draw_S;
+  bool draw_M;
   bool draw_fineAlign_intermediate;
+  std::mutex draw_finealign_mutex;
+  std::vector<std::thread> thread_pool;
+  double m_bbDiagnol;
 };
 
 //=============================================================================

@@ -28,15 +28,15 @@ void RegistrationViewer::subsample(const std::vector<Vector3d> &pts,
                                    const double avgDis) {
   //
   if (pts.size() == 0) return;
-  double r_threshold = 4 * avgDis;
-  //double r2 = r_threshold * r_threshold;
+  double r_threshold = 3 * avgDis;
+  // double r2 = r_threshold * r_threshold;
 
   PointHashGridSearcher3 searcher;
   for (int i = 0; i < pts.size(); ++i) {
     // if (sample_valid(pts[i], sample_ids, pts, r2)) {
     //   sample_ids.push_back(i);
     // }
-    if (!searcher.hasNearbyPoint(pts[i],r_threshold)) {
+    if (!searcher.hasNearbyPoint(pts[i], r_threshold)) {
       sample_ids.push_back(i);
       searcher.add(pts[i]);
     }
@@ -174,6 +174,61 @@ static void addFitE(const std::vector<Vector3d> &X_pos,
         &(X_T[xid].translation_[0]));
   }
 }
+static void addFineFitE(OpenMesh::TriMesh_ArrayKernelT<> &mesh,
+                        const OpenMesh::VPropHandleT<bool> &hasTarget,
+                        const OpenMesh::VPropHandleT<Vector3d> &targetPoints,
+                        OpenMesh::VPropHandleT<Transformation> &M_trans,
+                        ceres::Problem &fine_align_problem) {
+  //
+  typedef OpenMesh::TriMesh_ArrayKernelT<> Mesh;
+  Mesh::ConstVertexIter v_it(mesh.vertices_begin()), v_end(mesh.vertices_end());
+  for (; v_it != v_end; ++v_it) {
+    // pruned
+    if (!mesh.property(hasTarget, *v_it)) continue;
+
+    const OpenMesh::Vec3f &p = mesh.point(*v_it);
+    Transformation &trans = mesh.property(M_trans, *v_it);
+    const Vector3d &ci = mesh.property(targetPoints, *v_it);
+    CostFunction *cost_function_point =
+        new AutoDiffCostFunction<PointResidualFine, 1, 9, 3>(
+            new PointResidualFine(p, ci));
+    fine_align_problem.AddResidualBlock(cost_function_point, NULL,
+                                        trans.rotation_[0],
+                                        &(trans.translation_[0]));
+  }
+}
+static void addFineReg(OpenMesh::TriMesh_ArrayKernelT<> &mesh,
+                       const OpenMesh::VPropHandleT<bool> &hasTarget,
+                       const OpenMesh::VPropHandleT<Vector3d> &targetPoints,
+                       OpenMesh::VPropHandleT<Transformation> &M_trans,
+                       ceres::Problem &fine_align_problem) {
+  //
+  typedef OpenMesh::TriMesh_ArrayKernelT<> Mesh;
+  Mesh::ConstEdgeIter e_it(mesh.edges_begin()), e_end(mesh.edges_end());
+  for (; e_it != e_end; ++e_it) {
+    HalfedgeHandle he = mesh.halfedge_handle(*e_it, 0);
+    OpenMesh::VertexHandle v0 = mesh.to_vertex_handle(he);
+    OpenMesh::VertexHandle v1 = mesh.from_vertex_handle(he);
+    bool hit0 = mesh.property(hasTarget, v0);
+    bool hit1 = mesh.property(hasTarget, v1);
+    // cannot add rig energy if any one of vertex's correspond is pruned
+    if ((!hit0) && (!hit1)) continue;
+    //
+    const OpenMesh::Vec3f &p0 = mesh.point(v0);
+    const OpenMesh::Vec3f &p1 = mesh.point(v1);
+    Transformation &trans0 = mesh.property(M_trans, v0);
+    Transformation &trans1 = mesh.property(M_trans, v1);
+    const Vector3d &c0 = mesh.property(targetPoints, v0);
+    const Vector3d &c1 = mesh.property(targetPoints, v1);
+    CostFunction *cost_function_point =
+        new AutoDiffCostFunction<RigidResidualFine, 1, 9, 3, 9, 3>(
+            new RigidResidualFine(p0, p1, c0, c1));
+    fine_align_problem.AddResidualBlock(
+        cost_function_point, NULL, trans0.rotation_[0],
+        &(trans0.translation_[0]), trans1.rotation_[0],
+        &(trans1.translation_[0]));
+  }
+}
 inline static bool converge_coarseE(double Ek, double Ekm1) {
   static const double sigma = 0.005;
   return (std::abs(Ek - Ekm1) < sigma * Ek) ||
@@ -212,7 +267,7 @@ static void calculate_correspondences(const ClosestPoint &targetCP,
   }
   // 3. prune
   // normals of correspondences do not deviate more than 60 degrees
-  static const double normalCompatabilityThresh = 70;
+  static const double normalCompatabilityThresh = 90;
   static const double cosineThresh =
       std::cos(normalCompatabilityThresh * M_PI / 180.0);
   // distance threshold is 3 times the median distance
@@ -230,14 +285,14 @@ static void calculate_correspondences(const ClosestPoint &targetCP,
   for (const std::pair<int, int> &stPair : candidate_pairs) {
     int newPosid = stPair.first;
     int tarId = stPair.second;
-    // if (dis2_copy[newPosid] > distThreshold2) continue;
+    if (dis2_copy[newPosid] > distThreshold2) continue;
     // suppose distMedian is always less than 90 degree, which means that
     // cosineThresh<=cos(theta)<=1
     //!!!!!!!!!!!!!!!!!! Here I suppose that target(openmesh calculates) normals
     //! are all normalized!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // if (dot_product(X_newNormal[newPosid].normalize(),
-    //                DG.targetNormals[tarId]) <= 0)
-    //  continue;
+    if (dot_product(X_newNormal[newPosid].normalize(),
+                    DG.targetNormals[tarId]) <= cosineThresh)
+      continue;
     // put into output
     DG.stPairs.emplace_back(stPair);
   }
@@ -311,11 +366,12 @@ void RegistrationViewer::coarseNonRigidAlignment(
   // !!!!!!!!!!!!if done too musch times outer, try use al_reg > 0.1
   // or al_reg *= 0.5
   double al_reg = 1000.0;  // init as 1000, relax it if converge
+  size_t n_lastPairs = 0;
   static const double al_fit = 0.1;
   for (int n_out = 0; n_out < 100 && al_reg >= 0.1; ++n_out) {
     double E_km1 = 0;
     double E_k = 0;
-    for (int n_in = 0; n_in < 100; ++n_in) {
+    for (int n_in = 0; n_in < 20; ++n_in) {
       // ICP & prune
 
       // std::vector<Vector3d> X_newPos;
@@ -336,8 +392,8 @@ void RegistrationViewer::coarseNonRigidAlignment(
 
       // Solve it  based on Cholesky decomposition
       Solver::Options options;
-      options.max_num_iterations = 5;
-      // options.max_solver_time_in_seconds = 10.0;
+      options.max_num_iterations = 25;
+      //options.max_solver_time_in_seconds = 10.0;
       options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
       options.minimizer_progress_to_stdout = false;
       Solver::Summary summary;
@@ -357,8 +413,11 @@ void RegistrationViewer::coarseNonRigidAlignment(
           n_out, n_in, summary.initial_cost, E_k, summary.num_successful_steps,
           summary.total_time_in_seconds);
       // try if converge, and not quit at first inner iter
-      if (converge_coarseE(E_k, E_km1) && n_in > 0) break;
+      if (converge_coarseE(E_k, E_km1) && n_in > 0 &&
+          M_DG.stPairs.size() == n_lastPairs)
+        break;
       // not converge update E_k, E_km1
+      n_lastPairs = M_DG.stPairs.size();
       E_km1 = E_k;
       // X_T[i] = newMatrix[i]  * X_T[i] for all pairs
       // M_DG.updateTransforms(newTransforms);
@@ -391,67 +450,235 @@ void RegistrationViewer::fineLinearAlignment(
   std::vector<Vector3d> srcNormals;
   // std::vector<Vector3d> srcNormals;
   get_points(src_mesh, srcPoints, srcVHandles);
-  // get_normals(src_mesh, srcNormals);
+  get_normals(src_mesh, srcNormals);
   // std::vector<Vector3d> targetPoints(srcPoints.size());
 
-  OpenMesh::VPropHandleT<Vector3d> targetPoints;
   src_mesh.add_property(targetPoints);
   src_mesh.add_property(M_fineAlignTrans);
-
-  draw_fineAlign_intermediate = true;
+  src_mesh.add_property(hasTarget);
+  src_mesh.add_property(displacement);
   for (int i = 0; i < srcPoints.size(); ++i) {
     // init fine alignment trans
     src_mesh.property(M_fineAlignTrans, srcVHandles[i]) = Transformation();
+    src_mesh.property(hasTarget, srcVHandles[i]) = false;
+    src_mesh.property(displacement, srcVHandles[i]) = 0;
+    src_mesh.property(targetPoints, srcVHandles[i]) = srcPoints[i];
+
   }
+
+  ///
+  ClosestPoint targetCP;
+  std::vector<Vector3d> targetP;
+  std::vector<OpenMesh::VertexHandle> targetVHandles;
+  get_points(target_mesh, targetP, targetVHandles);
+  targetCP.init(targetP);
+  // draw_finealign_mutex.lock();
+  draw_fineAlign_intermediate = true;
+
   ////////////////////////////////////////////
   // TODO: real alignment happens here
   // for each vertex on src_mesh, trace a undirected ray to get closet point on
   // target mesh, also init M_fineAlignTrans to I and (0,0,0)
   // nanort::BVHTraceOptions trace_options;  // default
+  // for (int n_solve = 0; n_solve < 1; ++n_solve) {
   nanort::TriangleIntersector<float, nanort::TriangleIntersection<float>>
       triangle_intersecter((const float *)target_mesh.points(),
                            target_indices.data(), sizeof(float) * 3);
   Timer trace_timer;
-  static const float tFar = 1.0e+30f;
-  ParallelFor(0, (int)srcPoints.size(), [&](int i) {
-    nanort::Ray<float> ray;
-    ray.min_t = 0.0f;
-    ray.max_t = tFar;
-    ray.org[0] = srcPoints[i][0];
-    ray.org[1] = srcPoints[i][1];
-    ray.org[2] = srcPoints[i][2];
+  const float tFar = 1e30;  // m_bbDiagnol * 0.01;
+  std::vector<float> ts;
+  ts.reserve(srcPoints.size());
+  std::mutex ts_mutex;
+  // ParallelFor(0, (int)srcPoints.size(), [&](int i) {
+  //   ////
+  //   //const Vector3d& closetTargetP =
+  //   targetP[targetCP.getClosestPoint(srcPoints[i])];
+  //   //if(length2(closetTargetP - srcPoints[i]) < 0.01);
+  //   ////
+  //   nanort::Ray<float> ray0;
+  //   srcNormals[i] = srcNormals[i].normalize();
+  //   ray0.min_t = 0.001f;
+  //   ray0.max_t = tFar;
+  //   ray0.org[0] = srcPoints[i][0];
+  //   ray0.org[1] = srcPoints[i][1];
+  //   ray0.org[2] = srcPoints[i][2];
 
-    const OpenMesh::Vec3f &cur_normal(src_mesh.normal(srcVHandles[i]));
-    ray.dir[0] = cur_normal[0];
-    ray.dir[1] = cur_normal[1];
-    ray.dir[2] = cur_normal[2];
-    nanort::TriangleIntersection<float> isect;
-    bool hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
-    ray.dir[0] = -cur_normal[0];
-    ray.dir[1] = -cur_normal[1];
-    ray.dir[2] = -cur_normal[2];
-    hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
-  });
-  // for (int i = 0; i < srcPoints.size(); ++i) {
-  //   nanort::Ray<float> ray;
-  //   ray.min_t = 0.0f;
-  //   ray.max_t = tFar;
-  //   ray.org[0] = srcPoints[i][0];
-  //   ray.org[1] = srcPoints[i][1];
-  //   ray.org[2] = srcPoints[i][2];
+  //   ray0.dir[0] = srcNormals[i][0];
+  //   ray0.dir[1] = srcNormals[i][1];
+  //   ray0.dir[2] = srcNormals[i][2];
+  //   nanort::TriangleIntersection<float> isect0;
+  //   bool hit0 = S_BVH.Traverse(ray0, triangle_intersecter, &isect0);
 
-  //   const OpenMesh::Vec3f &cur_normal(src_mesh.normal(srcVHandles[i]));
-  //   ray.dir[0] = cur_normal[0];
-  //   ray.dir[1] = cur_normal[1];
-  //   ray.dir[2] = cur_normal[2];
-  //   nanort::TriangleIntersection<float> isect;
-  //   bool hit = S_BVH.Traverse(ray, triangle_intersecter, &isect);
-  // }
-  printf("\t[trace ray]: %s\n", trace_timer.elapsedString().c_str());
+  //   nanort::Ray<float> ray1;
+
+  //   ray1.min_t = 0.001f;
+  //   ray1.max_t = tFar;
+  //   ray1.org[0] = srcPoints[i][0];
+  //   ray1.org[1] = srcPoints[i][1];
+  //   ray1.org[2] = srcPoints[i][2];
+  //   ray1.dir[0] = -srcNormals[i][0];
+  //   ray1.dir[1] = -srcNormals[i][1];
+  //   ray1.dir[2] = -srcNormals[i][2];
+  //   nanort::TriangleIntersection<float> isect1;
+  //   bool hit1 = S_BVH.Traverse(ray1, triangle_intersecter, &isect1);
+  //   if (hit0 || hit1) {
+  //     // found an intersection, set target point for this vertex
+  //     OpenMesh::VertexHandle vh(srcVHandles[i]);
+
+  //     if ((hit0 && !hit1) || (hit0 && hit1 && isect0.t < isect1.t)) {
+  //       Vector3d tar(srcPoints[i] + (double)isect0.t * srcNormals[i]);
+  //       if (length2(tar - srcPoints[i]) < 0.01) {
+  //         src_mesh.property(targetPoints, vh) = tar;
+  //         src_mesh.property(displacement, vh) = isect0.t;
+  //         src_mesh.property(hasTarget, vh) = true;
+
+  //         {
+  //           std::lock_guard<std::mutex> guard(ts_mutex);
+  //           ts.emplace_back(isect0.t);
+  //         }
+  //       }
+  //     } else if ((hit1 && !hit0) || (hit0 && hit1 && isect0.t >= isect1.t)) {
+  //       Vector3d tar(srcPoints[i] + (double)(-isect1.t) * (srcNormals[i]));
+  //       if (length2(tar - srcPoints[i]) < 0.01) {
+  //         src_mesh.property(targetPoints, vh) = tar;
+  //         src_mesh.property(displacement, vh) = isect1.t;
+  //         src_mesh.property(hasTarget, vh) = true;
+
+  //         {
+  //           std::lock_guard<std::mutex> guard(ts_mutex);
+  //           ts.emplace_back(isect1.t);
+  //         }
+  //       }
+  //     }
+  //   }
+  // });
+  for (int i = 0; i < srcPoints.size(); ++i) {
+    ////
+    const Vector3d &closetTargetP =
+        targetP[targetCP.getClosestPoint(srcPoints[i])];
+    if (length2(closetTargetP - srcPoints[i]) < 0.0001) continue;
+    ////
+    nanort::Ray<float> ray0;
+    srcNormals[i] = srcNormals[i].normalize();
+    ray0.min_t = 0.0f;
+    ray0.max_t = tFar;
+    ray0.org[0] = srcPoints[i][0];
+    ray0.org[1] = srcPoints[i][1];
+    ray0.org[2] = srcPoints[i][2];
+
+    ray0.dir[0] = srcNormals[i][0];
+    ray0.dir[1] = srcNormals[i][1];
+    ray0.dir[2] = srcNormals[i][2];
+    nanort::TriangleIntersection<float> isect0;
+    bool hit0 = S_BVH.Traverse(ray0, triangle_intersecter, &isect0);
+
+    nanort::Ray<float> ray1;
+
+    ray1.min_t = 0.0f;
+    ray1.max_t = tFar;
+    ray1.org[0] = srcPoints[i][0];
+    ray1.org[1] = srcPoints[i][1];
+    ray1.org[2] = srcPoints[i][2];
+    ray1.dir[0] = -srcNormals[i][0];
+    ray1.dir[1] = -srcNormals[i][1];
+    ray1.dir[2] = -srcNormals[i][2];
+    nanort::TriangleIntersection<float> isect1;
+    bool hit1 = S_BVH.Traverse(ray1, triangle_intersecter, &isect1);
+    if (hit0 || hit1) {
+      // found an intersection, set target point for this vertex
+      OpenMesh::VertexHandle vh(srcVHandles[i]);
+
+      if ((hit0 && !hit1) || (hit0 && hit1 && isect0.t < isect1.t)) {
+        Vector3d tar(srcPoints[i] + (double)isect0.t * srcNormals[i]);
+        if (length2(tar - srcPoints[i]) < 0.01) {
+          src_mesh.property(targetPoints, vh) = tar;
+          src_mesh.property(displacement, vh) = isect0.t;
+          src_mesh.property(hasTarget, vh) = true;
+
+          {
+            std::lock_guard<std::mutex> guard(ts_mutex);
+            ts.emplace_back(isect0.t);
+          }
+        }
+      } else if ((hit1 && !hit0) || (hit0 && hit1 && isect0.t >= isect1.t)) {
+        Vector3d tar(srcPoints[i] + (double)(-isect1.t) * (srcNormals[i]));
+        if (length2(tar - srcPoints[i]) < 0.01) {
+          src_mesh.property(targetPoints, vh) = tar;
+          src_mesh.property(displacement, vh) = isect1.t;
+          src_mesh.property(hasTarget, vh) = true;
+
+          {
+            std::lock_guard<std::mutex> guard(ts_mutex);
+            ts.emplace_back(isect1.t);
+          }
+        }
+      }
+    }
+  }
+  printf("\t[trace undirected ray]: %s\n", trace_timer.elapsedString().c_str());
+
+  // prune pairs with long correspond
+  // std::nth_element(ts.begin(), ts.begin() + ts.size() / 2, ts.end());
+  // static const double distMedianThresh = 10;
+
+  double distThreshold =
+      0.01 * m_bbDiagnol;  // distMedianThresh * ts[ts.size() / 2];
+  for (int i = 0; i < srcVHandles.size(); ++i) {
+    if (src_mesh.property(hasTarget, srcVHandles[i])) {
+      //
+      if (src_mesh.property(displacement, srcVHandles[i]) > distThreshold) {
+        src_mesh.property(hasTarget, srcVHandles[i]) = false;
+      }
+    }
+  }
+
+  // // global optimization
+  // // global optimizatio
+  ceres::Problem fine_align_problem;
+  // given deformationgraph, scale: al_reg, add Erigid cost function into
+  // problem.
+  // std::vector<Transformation> newTransforms(M_DG.stPairs.size());
+  addFineFitE(src_mesh, hasTarget, targetPoints, M_fineAlignTrans,
+              fine_align_problem);
+  addFineReg(src_mesh, hasTarget, targetPoints, M_fineAlignTrans,
+             fine_align_problem);
+
+  // Solve it  based on Cholesky decomposition
+  Solver::Options options;
+  options.max_num_iterations = 100;
+  // options.max_solver_time_in_seconds = 10.0;
+  options.linear_solver_type = ceres::CGNR;
+  options.minimizer_progress_to_stdout = true;
+  Solver::Summary summary;
+  /////////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!
+  {
+    // when optimization, do not draw
+    // std::lock_guard<std::mutex> guard(M_DG.mutex);
+    Solve(options, &fine_align_problem, &summary);
+    glutPostRedisplay();
+  }
+
+  //}
+  // sleep(300);
   ////////////////////////////////////////////
-  draw_fineAlign_intermediate = false;
+  // finally transform mesh to new place
+  // for (int i = 0; i < srcVHandles.size(); ++i) {
+  //   OpenMesh::VertexHandle vh(srcVHandles[i]);
+  //   const Transformation &trans(src_mesh.property(M_fineAlignTrans, vh));
+  //   const OpenMesh::Vec3f &p(src_mesh.point(vh));
+  //   Vector3d pos(p[0], p[1], p[2]);
+  //   pos = trans.transformPoint(pos);
+  //   src_mesh.point(vh) = OpenMesh::Vec3f(pos[0], pos[1], pos[2]);
+  // }
+  // src_mesh.update_normals();
+
+  //
+  // draw_fineAlign_intermediate = false;
+  // draw_finealign_mutex.unlock();
 
   // clean up
-  src_mesh.remove_property(targetPoints);
-  src_mesh.remove_property(M_fineAlignTrans);
+  // src_mesh.remove_property(hasTarget);
+  // src_mesh.remove_property(targetPoints);
+  // src_mesh.remove_property(M_fineAlignTrans);
+  // src_mesh.remove_property(displacement);
 }
