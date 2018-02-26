@@ -1,0 +1,266 @@
+{
+  "variant": {
+    "label": "Release",
+    "keywordSettings": {
+      "buildType": "release"
+    },
+    "description": "Enable optimizations, omit debug info"
+  },
+  "activeEnvironments": [],
+  "codeModel": {
+    "configurations": [
+      {
+        "name": "Release",
+        "projects": [
+          {
+            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+            "name": "Exercise3",
+            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+            "targets": [
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/bin/reconstruct"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "reconstruct/ImplicitHoppe.hh",
+                      "reconstruct/ImplicitRBF.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "INCLUDE_TEMPLATES",
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "reconstruct/ImplicitRBF.cc",
+                      "reconstruct/reconstruct.cc"
+                    ]
+                  }
+                ],
+                "fullName": "reconstruct",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libisoex.a",
+                "linkerLanguage": "CXX",
+                "name": "reconstruct",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+                "type": "EXECUTABLE"
+              },
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/bin/viewer"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "viewer/GlutExaminer.hh",
+                      "viewer/GlutViewer.hh",
+                      "viewer/MeshViewer.hh",
+                      "viewer/ValenceViewer.hh",
+                      "viewer/gl.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "INCLUDE_TEMPLATES",
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "viewer/GlutExaminer.cc",
+                      "viewer/GlutViewer.cc",
+                      "viewer/MeshViewer.cc",
+                      "viewer/ValenceViewer.cc",
+                      "viewer/valenceview.cc"
+                    ]
+                  }
+                ],
+                "fullName": "viewer",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so",
+                "linkerLanguage": "CXX",
+                "name": "viewer",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+                "type": "EXECUTABLE"
+              },
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/lib/libann.a"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "ANN/ANN.h",
+                      "ANN/ANNperf.h",
+                      "ANN/ANNx.h",
+                      "ANN/bd_tree.h",
+                      "ANN/kd_fix_rad_search.h",
+                      "ANN/kd_pr_search.h",
+                      "ANN/kd_search.h",
+                      "ANN/kd_split.h",
+                      "ANN/kd_tree.h",
+                      "ANN/kd_util.h",
+                      "ANN/pr_queue.h",
+                      "ANN/pr_queue_k.h"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "INCLUDE_TEMPLATES",
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "ANN/ANN.cpp",
+                      "ANN/bd_fix_rad_search.cpp",
+                      "ANN/bd_pr_search.cpp",
+                      "ANN/bd_search.cpp",
+                      "ANN/bd_tree.cpp",
+                      "ANN/brute.cpp",
+                      "ANN/kd_dump.cpp",
+                      "ANN/kd_fix_rad_search.cpp",
+                      "ANN/kd_pr_search.cpp",
+                      "ANN/kd_search.cpp",
+                      "ANN/kd_split.cpp",
+                      "ANN/kd_tree.cpp",
+                      "ANN/kd_util.cpp",
+                      "ANN/perf.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "libann.a",
+                "linkerLanguage": "CXX",
+                "name": "ann",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+                "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/lib/libisoex.a"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "IsoEx/Extractors/Edge2VertexMapT.hh",
+                      "IsoEx/Extractors/ExtendedMarchingCubesT.hh",
+                      "IsoEx/Extractors/MCTables.hh",
+                      "IsoEx/Extractors/MarchingCubesT.hh",
+                      "IsoEx/Grids/Grid.hh",
+                      "IsoEx/Grids/ImplicitGrid.hh",
+                      "IsoEx/Grids/RegularGrid.hh",
+                      "IsoEx/Grids/ScalarGridT.hh",
+                      "IsoEx/Implicits/CSG.hh",
+                      "IsoEx/Implicits/Implicit.hh",
+                      "IsoEx/Implicits/ImplicitSphere.hh",
+                      "IsoEx/Math/MatrixT.hh",
+                      "IsoEx/Math/svd.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "INCLUDE_TEMPLATES",
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "IsoEx/Extractors/ExtendedMarchingCubesT.cc",
+                      "IsoEx/Extractors/MCTables.cc",
+                      "IsoEx/Extractors/MarchingCubesT.cc",
+                      "IsoEx/Grids/RegularGrid.cc",
+                      "IsoEx/Grids/ScalarGridT.cc",
+                      "IsoEx/Math/svd.cc"
+                    ]
+                  }
+                ],
+                "fullName": "libisoex.a",
+                "linkerLanguage": "CXX",
+                "name": "isoex",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+                "type": "STATIC_LIBRARY"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cookie": "0.29068836711824364",
+    "inReplyTo": "codemodel",
+    "type": "reply"
+  }
+}
