@@ -27,13 +27,25 @@ public:
     // evaluate implicit at position _p
     float operator()(const Vec3f& _p) const
     {
-        float dist(0);
+        //float dist(0);
 
         //////////////////////////////////////////////////////////////////////
         // INSERT CODE:
         // 1) find closest sample point
+        float min_length = FLT_MAX;
+        int min_id = -1;
+        for(int i = 0; i < points_.size(); ++i){
+            float dist = (_p - points_[i]).sqrnorm();
+            if(dist < min_length){
+                min_length = dist;
+                min_id = i;
+            }
+        }
         // 2) compute distance to its plane
-        //--- start strip
+        const Vec3f& xi(points_[min_id]);
+        const Vec3f& ni(normals_[min_id]);
+        float dist = dot(_p - xi, ni);
+        
         
         
         //////////////////////////////////////////////////////////////////////

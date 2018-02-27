@@ -19,56 +19,6 @@
             "targets": [
               {
                 "artifacts": [
-                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/bin/reconstruct"
-                ],
-                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
-                "fileGroups": [
-                  {
-                    "isGenerated": false,
-                    "sources": [
-                      "reconstruct/ImplicitHoppe.hh",
-                      "reconstruct/ImplicitRBF.hh"
-                    ]
-                  },
-                  {
-                    "compileFlags": "-O3 -DNDEBUG  ",
-                    "defines": [
-                      "INCLUDE_TEMPLATES",
-                      "_USE_MATH_DEFINES"
-                    ],
-                    "includePath": [
-                      {
-                        "path": "/usr/local/include"
-                      },
-                      {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
-                      },
-                      {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
-                      },
-                      {
-                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
-                      }
-                    ],
-                    "isGenerated": false,
-                    "language": "CXX",
-                    "sources": [
-                      "reconstruct/ImplicitRBF.cc",
-                      "reconstruct/reconstruct.cc"
-                    ]
-                  }
-                ],
-                "fullName": "reconstruct",
-                "linkFlags": "-rdynamic",
-                "linkLanguageFlags": "-O3 -DNDEBUG",
-                "linkLibraries": "-Wl,-rpath,/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libisoex.a",
-                "linkerLanguage": "CXX",
-                "name": "reconstruct",
-                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
-                "type": "EXECUTABLE"
-              },
-              {
-                "artifacts": [
                   "/home/immocat/Documents/cs621/CS621hw/Exercise3/bin/viewer"
                 ],
                 "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
@@ -194,6 +144,56 @@
               },
               {
                 "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise3/bin/reconstruct"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "reconstruct/ImplicitHoppe.hh",
+                      "reconstruct/ImplicitRBF.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "INCLUDE_TEMPLATES",
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise3/gmm"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "reconstruct/ImplicitRBF.cc",
+                      "reconstruct/reconstruct.cc"
+                    ]
+                  }
+                ],
+                "fullName": "reconstruct",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so ../lib/libisoex.a",
+                "linkerLanguage": "CXX",
+                "name": "reconstruct",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3",
+                "type": "EXECUTABLE"
+              },
+              {
+                "artifacts": [
                   "/home/immocat/Documents/cs621/CS621hw/Exercise3/lib/libisoex.a"
                 ],
                 "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise3/build",
@@ -259,7 +259,7 @@
         ]
       }
     ],
-    "cookie": "0.29068836711824364",
+    "cookie": "0.15155664706067906",
     "inReplyTo": "codemodel",
     "type": "reply"
   }

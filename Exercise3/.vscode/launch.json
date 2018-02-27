@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/reconstruct",
-            "args": [],
+            "args": ["/home/immocat/Documents/cs621/CS621hw/Exercise3/data/sphere.pts","output.off"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -22,6 +22,7 @@ public:
 
     
     // fit RBF to given constraints
+    virtual ~ImplicitRBF(){}
     ImplicitRBF( 
         const std::vector<Vec3f>& _points, 
         const std::vector<Vec3f>& _normals );

@@ -18,10 +18,10 @@
 //=============================================================================
 
 // set to 1 for RBF fitting
-#define USE_RBF    0
+#define USE_RBF    1
 
 // else set this to 1 for HOPPE
-#define USE_HOPPE  1
+#define USE_HOPPE  0
 
 // resolution of Marching Cubes grid
 #define MC_RESOLUTION  50
