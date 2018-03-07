@@ -1,0 +1,83 @@
+{
+  "variant": {
+    "label": "Release",
+    "keywordSettings": {
+      "buildType": "release"
+    },
+    "description": "Enable optimizations, omit debug info"
+  },
+  "activeEnvironments": [],
+  "codeModel": {
+    "configurations": [
+      {
+        "name": "Release",
+        "projects": [
+          {
+            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise4/build",
+            "name": "Exercise4",
+            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise4",
+            "targets": [
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise4/bin/smooth"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise4/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "GlutExaminer.hh",
+                      "GlutViewer.hh",
+                      "MeshViewer.hh",
+                      "QualityViewer.hh",
+                      "SmoothingViewer.hh",
+                      "gl.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise4"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "GlutExaminer.cc",
+                      "GlutViewer.cc",
+                      "MeshViewer.cc",
+                      "QualityViewer.cc",
+                      "SmoothingViewer.cc",
+                      "smoother.cc"
+                    ]
+                  }
+                ],
+                "fullName": "smooth",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so",
+                "linkerLanguage": "CXX",
+                "name": "smooth",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise4",
+                "type": "EXECUTABLE"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cookie": "0.8941441920152098",
+    "inReplyTo": "codemodel",
+    "type": "reply"
+  }
+}
