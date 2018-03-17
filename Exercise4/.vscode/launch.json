@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/smooth",
-            "args": [],
+            "args": ["${workspaceFolder}/data/scanned_face.off"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -51,6 +51,7 @@ QualityViewer::QualityViewer(const char* _title, int _width, int _height)
 
     mesh_.add_property(vcurvature_);
     mesh_.add_property(vunicurvature_);
+    mesh_.add_property(vLu_);
     mesh_.add_property(vweight_);
     mesh_.add_property(eweight_);
     mesh_.add_property(tshape_);
@@ -233,6 +234,20 @@ void QualityViewer::calc_uniform_mean_curvature()
     // TASK 4.1.a Approximate mean curvature using the length of the uniform Laplacian approximation
     // Save your approximation in vunicurvature_ vertex property of the mesh.
     // ------------- IMPLEMENT HERE ---------
+    for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){
+        laplace = Mesh::Point(0.0, 0.0, 0.0);
+        int n = 0;
+        for(vv_it = mesh_.vv_iter(*v_it); vv_it.is_valid(); ++vv_it){
+            laplace += mesh_.point(*vv_it);
+            ++n;
+        }
+        if(n != 0){
+            laplace /= (double)n;
+            laplace -= mesh_.point(*v_it);
+        }
+        mesh_.property(vunicurvature_, *v_it) = laplace.norm() * 0.5;
+        mesh_.property(vLu_, *v_it) = laplace;
+    }
 
 }
 
