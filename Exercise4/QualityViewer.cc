@@ -41,7 +41,7 @@
 #include "QualityViewer.hh"
 #include <vector>
 #include <float.h>
-
+#include <algorithm>
 //== IMPLEMENTATION ========================================================== 
 
 QualityViewer::QualityViewer(const char* _title, int _width, int _height)
@@ -275,15 +275,35 @@ void QualityViewer::calc_triangle_quality()
 {
     Mesh::FaceIter              f_it, f_end(mesh_.faces_end());
     Mesh::ConstFaceVertexIter   cfvIt;
-    OpenMesh::Vec3f             v0,v1,v2;
+    OpenMesh::Vec3f             v[3];
     OpenMesh::Vec3f             v0v1,v0v2,v1v2;
-    Mesh::Scalar                denom, circum_radius_sq, min_length_sq;
+    Mesh::Scalar                denom, circum_radius, min_length_sq;
 
     // ------------- IMPLEMENT HERE ---------
     // TASK 4.2 Compute triangle shape measure and save it in the tshape_ property
     // For numerical stability you might want to set the property value to
     // a predifined large value (e.g. FLT_MAX) if the denominator is smaller than FLT_MIN
     // ------------- IMPLEMENT HERE ---------
+    for(f_it = mesh_.faces_begin(); f_it != f_end; ++f_it){
+        int i = 0;
+        for(cfvIt = mesh_.cfv_iter(*f_it); cfvIt.is_valid(); ++cfvIt){
+            assert(i < 3);
+            v[i++] = mesh_.point(*cfvIt);
+        }
+        v0v1 = v[0] - v[1];
+        v0v2 = v[0] - v[2];
+        v1v2 = v[1] - v[2];
+        OpenMesh::Vec3f cross_product = OpenMesh::cross(v0v2, v1v2);
+        float v0v1_norm = v0v1.norm();
+        float v0v2_norm = v0v2.norm();
+        float v1v2_norm = v1v2.norm();
+        denom = 2.0 * cross_product.norm() * std::min(v0v1_norm, std::min(v0v2_norm, v1v2_norm));
+        circum_radius = FLT_MAX;
+        if(denom > FLT_MIN){
+            circum_radius = v0v1_norm * v0v2_norm * v1v2_norm / denom;
+        }
+        mesh_.property(tshape_, *f_it) = circum_radius;
+    }
 
 }
 

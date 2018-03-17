@@ -1,16 +1,16 @@
 {
   "variant": {
-    "label": "Release",
+    "label": "Debug",
     "keywordSettings": {
-      "buildType": "release"
+      "buildType": "debug"
     },
-    "description": "Enable optimizations, omit debug info"
+    "description": "Emit debug information without performing optimizations"
   },
   "activeEnvironments": [],
   "codeModel": {
     "configurations": [
       {
-        "name": "Release",
+        "name": "Debug",
         "projects": [
           {
             "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise4/build",
@@ -35,7 +35,7 @@
                     ]
                   },
                   {
-                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "compileFlags": "-g  ",
                     "defines": [
                       "_USE_MATH_DEFINES"
                     ],
@@ -64,7 +64,7 @@
                 ],
                 "fullName": "smooth",
                 "linkFlags": "-rdynamic",
-                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLanguageFlags": "-g",
                 "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so",
                 "linkerLanguage": "CXX",
                 "name": "smooth",
@@ -76,7 +76,7 @@
         ]
       }
     ],
-    "cookie": "0.47490941062703285",
+    "cookie": "0.4848967606590884",
     "inReplyTo": "codemodel",
     "type": "reply"
   }
