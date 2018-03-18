@@ -103,6 +103,7 @@ void SmoothingViewer::smooth(unsigned int _iters) {
   // and their sum for the normalization term.
   // ------------- IMPLEMENT HERE ---------
   for(unsigned int i = 0; i < _iters; ++i){
+      calc_weights();
       calc_mean_curvature();
       // update position
       for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){

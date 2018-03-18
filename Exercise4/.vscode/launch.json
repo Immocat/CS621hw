@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/smooth",
-            "args": ["${workspaceFolder}/data/max.off"],
+            "args": ["${workspaceFolder}/data/bunny.off"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

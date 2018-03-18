@@ -295,13 +295,29 @@ void QualityViewer::calc_gauss_curvature()
     Mesh::Point             d0, d1;
     Mesh::Scalar            angles, cos_angle;
     Mesh::Scalar            lb(-1.0), ub(1.0);
-
+    
     // ------------- IMPLEMENT HERE ---------
     // TASK 4.4 Approximate Gaussian curvature.
     // Hint: When calculating angles out of cross products make sure the value 
     // you pass to the acos function is between -1.0 and 1.0.
     // Use the vweight_ property for the area weight.
     // ------------- IMPLEMENT HERE ---------
+    for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){
+        vv_it = mesh_.vv_iter(*v_it);
+        vv_it2 = vv_it++;
+        Mesh::Point v = mesh_.point(*v_it);
+        angles = 0.0f;
+        while(vv_it.is_valid()){
+            d0 = (mesh_.point(*vv_it) - v).normalize();
+            d1 = (mesh_.point(*vv_it2) - v).normalize();
+            cos_angle = std::min(0.99f, std::max(-0.99f, (d0|d1)));
+            angles += acos(cos_angle); 
+            vv_it2 = vv_it++;
+        }
+        float test = mesh_.property(vweight_, *v_it);
+        mesh_.property(vgausscurvature_, *v_it) = mesh_.property(vweight_, *v_it) * 2 * (M_PI * 2 - angles);
+    }
+
 
 }
 
