@@ -52,6 +52,7 @@ QualityViewer::QualityViewer(const char* _title, int _width, int _height)
     mesh_.add_property(vcurvature_);
     mesh_.add_property(vunicurvature_);
     mesh_.add_property(vLu_);
+    mesh_.add_property(vL_B);
     mesh_.add_property(vweight_);
     mesh_.add_property(eweight_);
     mesh_.add_property(tshape_);
@@ -162,11 +163,11 @@ void QualityViewer::calc_weights()
     {
         w  = 0.0;
 
-        h0 = mesh_.halfedge_handle(e_it.handle(), 0);
+        h0 = mesh_.halfedge_handle(*e_it, 0);
         v0 = mesh_.to_vertex_handle(h0);
         p0 = mesh_.point(v0);
 
-        h1 = mesh_.halfedge_handle(e_it.handle(), 1);
+        h1 = mesh_.halfedge_handle(*e_it, 1);
         v1 = mesh_.to_vertex_handle(h1);
         p1 = mesh_.point(v1);
 
@@ -183,7 +184,7 @@ void QualityViewer::calc_weights()
         w += 1.0 / tan(acos(std::min(0.99f, std::max(-0.99f, (d0|d1)))));
 
         w = std::max(0.0f, w);
-        mesh_.property(eweight_,e_it) = w;
+        mesh_.property(eweight_, *e_it) = w;
     }
 
 
@@ -191,18 +192,18 @@ void QualityViewer::calc_weights()
     {
         area = 0.0;
 
-        for (vf_it=mesh_.vf_iter(v_it); vf_it; ++vf_it)
+        for (vf_it=mesh_.vf_iter(*v_it); vf_it.is_valid(); ++vf_it)
         {
-            fv_it = mesh_.fv_iter(vf_it);
+            fv_it = mesh_.fv_iter(*vf_it);
  
-            const Mesh::Point& P = mesh_.point(fv_it);  ++fv_it;
-            const Mesh::Point& Q = mesh_.point(fv_it);  ++fv_it;
-            const Mesh::Point& R = mesh_.point(fv_it);
+            const Mesh::Point& P = mesh_.point(*fv_it);  ++fv_it;
+            const Mesh::Point& Q = mesh_.point(*fv_it);  ++fv_it;
+            const Mesh::Point& R = mesh_.point(*fv_it);
 
             area += ((Q-P)%(R-P)).norm() * 0.5f * 0.3333f;
         }
 
-        mesh_.property(vweight_,v_it) = 1.0 / (2.0 * area);
+        mesh_.property(vweight_, *v_it) = 1.0 / (2.0 * area);
     }
 }
 
@@ -211,9 +212,9 @@ void QualityViewer::calc_weights()
 void QualityViewer::calc_mean_curvature()
 {
     Mesh::VertexIter        v_it, v_end(mesh_.vertices_end());
-    Mesh::HalfedgeHandle    h;
-    Mesh::EdgeHandle        e;
-    Mesh::VertexVertexIter  vv_it;
+    Mesh::HalfedgeHandle    h0, h1;
+    //Mesh::EdgeHandle        e;
+    Mesh::VertexEdgeIter    ve_it;
     Mesh::Point             laplace(0.0, 0.0, 0.0);
 
     // ------------- IMPLEMENT HERE ---------
@@ -221,6 +222,39 @@ void QualityViewer::calc_mean_curvature()
     // Save your approximation in vcurvature_ vertex property of the mesh.
     // Use the weights from calc_weights(): eweight_ and vweight_
     // ------------- IMPLEMENT HERE ---------
+    for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){
+        laplace = Mesh::Point(0.0, 0.0, 0.0);
+        float w_sum = 0.0f;
+        int v_id = v_it->idx();
+        Mesh::Point v = mesh_.point(*v_it);
+        for(ve_it = mesh_.ve_iter(*v_it); ve_it.is_valid(); ++ve_it){
+            float wi = mesh_.property(eweight_, *ve_it);
+            w_sum += wi;
+            
+            
+            h0 = mesh_.halfedge_handle(*ve_it, 0);
+            Mesh::VertexHandle v0 = mesh_.to_vertex_handle(h0);
+            Mesh::VertexHandle v1 = mesh_.from_vertex_handle(h0);
+            if(v0.idx() == v_id){
+                //v1 is the opposite vertex
+                laplace += wi * (mesh_.point(v1) - v);
+            }
+            else{
+                //v0 is the opposite vertex
+                laplace += wi * (mesh_.point(v0) - v);
+            }
+        }
+        //
+        if(std::abs(w_sum) > FLT_EPSILON){
+            laplace /= w_sum;
+        }
+        else{
+            laplace = Mesh::Point(0.0, 0.0, 0.0);
+        }
+        mesh_.property(vcurvature_, *v_it) = laplace.norm() * 0.5;
+        mesh_.property(vL_B, *v_it) = laplace;
+    }
+
 
 }
 
@@ -244,6 +278,9 @@ void QualityViewer::calc_uniform_mean_curvature()
         if(n != 0){
             laplace /= (double)n;
             laplace -= mesh_.point(*v_it);
+        }
+        else{
+            laplace = Mesh::Point(0.0, 0.0, 0.0);
         }
         mesh_.property(vunicurvature_, *v_it) = laplace.norm() * 0.5;
         mesh_.property(vLu_, *v_it) = laplace;

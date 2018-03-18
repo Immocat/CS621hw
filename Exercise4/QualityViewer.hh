@@ -88,7 +88,7 @@ protected:
 
 
     OpenMesh::VPropHandleT<Mesh::Scalar>  vweight_, vunicurvature_, vcurvature_, vgausscurvature_;
-    OpenMesh::VPropHandleT<Mesh::Point> vLu_;
+    OpenMesh::VPropHandleT<Mesh::Point> vLu_, vL_B;
     OpenMesh::EPropHandleT<Mesh::Scalar>  eweight_;
     OpenMesh::FPropHandleT<Mesh::Scalar>  tshape_;
 

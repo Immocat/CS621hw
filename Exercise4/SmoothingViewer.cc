@@ -102,6 +102,16 @@ void SmoothingViewer::smooth(unsigned int _iters) {
   // Use eweight_ properties for the individual edge weights
   // and their sum for the normalization term.
   // ------------- IMPLEMENT HERE ---------
+  for(unsigned int i = 0; i < _iters; ++i){
+      calc_mean_curvature();
+      // update position
+      for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){
+          mesh_.point(*v_it) += 0.5 * mesh_.property(vL_B, *v_it);
+      }
+      //Hint: do not forget to update normals after 
+      //vertex coordinates change.
+      mesh_.update_normals();
+  }
 }
 
 //-----------------------------------------------------------------------------
