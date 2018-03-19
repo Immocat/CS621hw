@@ -291,7 +291,7 @@ void QualityViewer::calc_uniform_mean_curvature()
 void QualityViewer::calc_gauss_curvature()
 {
     Mesh::VertexIter        v_it, v_end(mesh_.vertices_end());
-    Mesh::VertexVertexIter  vv_it, vv_it2;
+    Mesh::VertexVertexCWIter  vv_it, vv_it2;
     Mesh::Point             d0, d1;
     Mesh::Scalar            angles, cos_angle;
     Mesh::Scalar            lb(-1.0), ub(1.0);
@@ -303,19 +303,25 @@ void QualityViewer::calc_gauss_curvature()
     // Use the vweight_ property for the area weight.
     // ------------- IMPLEMENT HERE ---------
     for(v_it = mesh_.vertices_begin(); v_it != v_end; ++v_it){
-        vv_it = mesh_.vv_iter(*v_it);
+        vv_it = mesh_.vv_cwiter(*v_it);
         vv_it2 = vv_it++;
-        Mesh::Point v = mesh_.point(*v_it);
+        const Mesh::Point v = mesh_.point(*v_it);
         angles = 0.0f;
+        Mesh::VertexVertexCWIter first = vv_it2;
         while(vv_it.is_valid()){
             d0 = (mesh_.point(*vv_it) - v).normalize();
             d1 = (mesh_.point(*vv_it2) - v).normalize();
-            cos_angle = std::min(0.99f, std::max(-0.99f, (d0|d1)));
-            angles += acos(cos_angle); 
+            cos_angle = OpenMesh::dot(d0, d1);
+            angles += std::acos(cos_angle); 
             vv_it2 = vv_it++;
         }
+        d0 = (mesh_.point(*vv_it2) - v).normalize();
+        d1 = (mesh_.point(*first) - v).normalize();
+        cos_angle = OpenMesh::dot(d0, d1);
+        angles += std::acos(cos_angle);
         float test = mesh_.property(vweight_, *v_it);
-        mesh_.property(vgausscurvature_, *v_it) = mesh_.property(vweight_, *v_it) * 2 * (M_PI * 2 - angles);
+        float test2 = test * 2 * (M_PI * 2 - angles);
+        mesh_.property(vgausscurvature_, *v_it) = test2;
     }
 
 
@@ -428,7 +434,8 @@ QualityViewer::Mesh::Color QualityViewer::value_to_color(QualityViewer::Mesh::Sc
 
     unsigned char u;
 
-    if (value < v0) col = Mesh::Color(0, 0, 255);
+    if (value < v0) 
+        col = Mesh::Color(0, 0, 255);
     else if (value > v4) col = Mesh::Color(255, 0, 0);
 
     else if (value <= v2) 
