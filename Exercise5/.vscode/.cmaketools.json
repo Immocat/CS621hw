@@ -1,0 +1,73 @@
+{
+  "variant": {
+    "label": "Release",
+    "keywordSettings": {
+      "buildType": "release"
+    },
+    "description": "Enable optimizations, omit debug info"
+  },
+  "activeEnvironments": [],
+  "codeModel": {
+    "configurations": [
+      {
+        "name": "Release",
+        "projects": [
+          {
+            "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise5/build",
+            "name": "Exercise5",
+            "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise5",
+            "targets": [
+              {
+                "artifacts": [
+                  "/home/immocat/Documents/cs621/CS621hw/Exercise5/bin/decimation"
+                ],
+                "buildDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise5/build",
+                "fileGroups": [
+                  {
+                    "isGenerated": false,
+                    "sources": [
+                      "QuadricT.hh"
+                    ]
+                  },
+                  {
+                    "compileFlags": "-O3 -DNDEBUG  ",
+                    "defines": [
+                      "_USE_MATH_DEFINES"
+                    ],
+                    "includePath": [
+                      {
+                        "path": "/usr/local/include"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/OpenMesh/src"
+                      },
+                      {
+                        "path": "/home/immocat/Documents/cs621/CS621hw/Exercise5"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "deci.cc"
+                    ]
+                  }
+                ],
+                "fullName": "decimation",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-O3 -DNDEBUG",
+                "linkLibraries": "-Wl,-rpath,/usr/local/lib:/home/immocat/Documents/cs621/CS621hw/OpenMesh/lib -lGLU -lGL /usr/local/lib/libglut.so -lXmu -lXi /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshCore.so /home/immocat/Documents/cs621/CS621hw/OpenMesh/lib/libOpenMeshTools.so",
+                "linkerLanguage": "CXX",
+                "name": "decimation",
+                "sourceDirectory": "/home/immocat/Documents/cs621/CS621hw/Exercise5",
+                "type": "EXECUTABLE"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cookie": "0.6663517142020103",
+    "inReplyTo": "codemodel",
+    "type": "reply"
+  }
+}
