@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/decimation",
-            "args": [],
+            "args": ["0.1","${workspaceFolder}/data/cow.off","${workspaceFolder}/data/output-mesh.off"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
