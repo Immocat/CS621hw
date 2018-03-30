@@ -7,6 +7,7 @@
 #include <set>
 //#include <unistd.h> //in linux version this header file was included. Removed for MSVC version
 #include <float.h>
+#include <vector>
 
 //== IMPLEMENTATION ===========================================================
 
@@ -104,14 +105,20 @@ void init()
 
     for (v_it=mesh.vertices_begin(); v_it != v_end; ++v_it)
     {
-        priority(v_it) = -1.0;
-        quadric(v_it).clear();
+        priority(*v_it) = -1.0;
+        quadric(*v_it).clear();
 
         // Exercise 5.1 --------------------------------------
         // INSERT CODE:
         // calc vertex quadrics from incident triangles
         // ---------------------------------------------------
-
+        Mesh::Point v_p = mesh.point(*v_it);
+        for(Mesh::VertexFaceIter vf_it = mesh.vf_begin(*v_it); vf_it.is_valid(); ++vf_it){
+            // iterate all neighbor faces
+            Mesh::Point face_normal = mesh.normal(*vf_it);
+            float d = -OpenMesh::dot(face_normal, v_p);
+            quadric(*v_it) = Quadricd(face_normal[0], face_normal[1], face_normal[2], d);
+        }
     }
 }
 
@@ -130,7 +137,7 @@ is_collapse_legal(Mesh::HalfedgeHandle _hh)
     Mesh::FaceHandle fr = mesh.face_handle(mesh.opposite_halfedge_handle(_hh));
 
     // backup point positions
-    Mesh::Point p0 = mesh.point(v0);
+    // Mesh::Point p0 = mesh.point(v0);
     Mesh::Point p1 = mesh.point(v1);
 
     // topological test
@@ -147,8 +154,34 @@ is_collapse_legal(Mesh::HalfedgeHandle _hh)
     //   if normal vector of a (non-degenerate) triangle changes by 
     //   more than pi/4 degrees, return false.
     // ------------------------------------------------------------
-
-
+    static const float cos_piD4 = 0.70710678118;
+    for(Mesh::VertexFaceIter v0f_it = mesh.vf_begin(v0); v0f_it.is_valid(); ++v0f_it){
+        if((*v0f_it).idx() == fl.idx() || (*v0f_it).idx() == fr.idx())
+            continue;
+        // for each face, iterate all vertecies with ccw fashion
+        Mesh::VertexHandle fv[3];
+        Mesh::Point fv_p[3];
+        int i = 0;
+        for(Mesh::FaceVertexCCWIter v0fv_it = mesh.fv_ccwbegin(*v0f_it); v0fv_it.is_valid(); ++v0fv_it){
+            assert(i < 3);
+            fv[i] = *v0fv_it;
+            fv_p[i] = mesh.point(*v0fv_it);
+            ++i;
+        }
+        Mesh::Point origin_normal, changed_normal;
+        if(fv[0].idx() == v0.idx()){
+            origin_normal = OpenMesh::cross(fv_p[1] - fv_p[2], fv_p[0] - fv_p[2]).normalized();
+            changed_normal = OpenMesh::cross(fv_p[1] - fv_p[2], p1 - fv_p[2]).normalized();
+        }else if(fv[1].idx() == v0.idx()){
+            origin_normal = OpenMesh::cross(fv_p[2] - fv_p[0], fv_p[1] - fv_p[0]).normalized();
+            changed_normal = OpenMesh::cross(fv_p[2] - fv_p[0], p1 - fv_p[0]).normalized();
+        }else{
+            origin_normal = OpenMesh::cross(fv_p[0] - fv_p[1], fv_p[2] - fv_p[1]).normalized();
+            changed_normal = OpenMesh::cross(fv_p[0] - fv_p[1], p1 - fv_p[1]).normalized();
+        }
+        if(OpenMesh::dot(origin_normal, changed_normal) < cos_piD4)
+            return false;
+    }
     // collapse passed all tests -> ok
     return true;
 }
@@ -162,9 +195,12 @@ float priority(Mesh::HalfedgeHandle _heh)
     // return priority: the smaller the better
     // use quadrics to estimate approximation error
     // -----------------------------------------------------------
-
-
-    return 0; //this is here just to make sure it compiles until function is implemented
+    Mesh::VertexHandle v1 = mesh.from_vertex_handle(_heh), v2 = mesh.to_vertex_handle(_heh);
+    // v2 as vbar
+    Quadricd q12 = quadric(v1);
+    q12 += quadric(v2);
+    return q12(mesh.point(v2));
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -178,13 +214,13 @@ void enqueue_vertex(Mesh::VertexHandle _vh)
     // find best out-going halfedge
     for (Mesh::VOHIter vh_it(mesh, _vh); vh_it; ++vh_it)
     {
-        if (is_collapse_legal(vh_it))
+        if (is_collapse_legal(*vh_it))
         {
-            prio = priority(vh_it);
+            prio = priority(*vh_it);
             if (prio != -1.0 && prio < min_prio)
             {
                 min_prio = prio;
-                min_hh   = vh_it.handle();
+                min_hh   = *vh_it;
             }
         }
     }
@@ -223,7 +259,7 @@ void  decimate(unsigned int _n_vertices)
 
     queue.clear();
     for (; v_it!=v_end; ++v_it)
-        enqueue_vertex(v_it.handle());
+        enqueue_vertex(*v_it);
 
     while (nv > _n_vertices && !queue.empty())
     {
@@ -234,7 +270,24 @@ void  decimate(unsigned int _n_vertices)
         //   2) collapse this halfedge
         //   3) update queue
         // -----------------------------------------------------------
-
+        //   1) take 1st element of queue
+        Mesh::VertexHandle v_min = *(queue.begin());
+        Mesh::HalfedgeHandle he_min = mesh.property(vtarget, v_min);
+        Mesh::VertexHandle v_min_to = mesh.to_vertex_handle(he_min);
+        assert(mesh.from_vertex_handle(he_min).idx() == v_min.idx());
+        //   update quadric error Qbar
+        quadric(v_min_to) += quadric(v_min);
+        std::vector<Mesh::VertexHandle> enqueue_candidate;
+        for(Mesh::VertexVertexIter vv_it = mesh.vv_begin(v_min); vv_it.is_valid(); ++vv_it){
+            enqueue_candidate.push_back(*vv_it);
+        }
+        mesh.collapse(he_min);
+        mesh.adjust_outgoing_halfedge(v_min_to);
+        queue.erase(v_min);
+        for(Mesh::VertexHandle vh : enqueue_candidate){
+            enqueue_vertex(vh);
+        }
+        --nv;
     }
 
     // clean up

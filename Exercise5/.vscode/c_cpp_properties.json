@@ -5,7 +5,7 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}"
+                "${workspaceFolder}"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -13,7 +13,7 @@
                 "path": [
                     "/usr/include",
                     "/usr/local/include",
-                    "${workspaceRoot}"
+                    "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
@@ -26,6 +26,7 @@
         {
             "name": "Linux",
             "includePath": [
+                "${workspaceFolder}",
                 "/usr/include/c++/7",
                 "/usr/include/x86_64-linux-gnu/c++/7",
                 "/usr/include/c++/7/backward",
@@ -34,15 +35,13 @@
                 "/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed",
                 "/usr/include/x86_64-linux-gnu",
                 "/usr/include",
-                "${workspaceRoot}/../OpenMesh/src",
-                "${workspaceRoot}",
-                "${workspaceRoot}/ANN",
-                "/usr/include/eigen3"
+                "${workspaceRoot}/../OpenMesh/src"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
+                    "${workspaceFolder}",
                     "/usr/include/c++/7",
                     "/usr/include/x86_64-linux-gnu/c++/7",
                     "/usr/include/c++/7/backward",
@@ -50,9 +49,7 @@
                     "/usr/local/include",
                     "/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed",
                     "/usr/include/x86_64-linux-gnu",
-                    "/usr/include",
-                    "${workspaceRoot}/../OpenMesh/src",
-                    "${workspaceRoot}/geodesic"
+                    "/usr/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
@@ -65,17 +62,18 @@
             "name": "Win32",
             "includePath": [
                 "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
-                "${workspaceRoot}"
+                "${workspaceFolder}"
             ],
             "defines": [
                 "_DEBUG",
-                "UNICODE"
+                "UNICODE",
+                "_UNICODE"
             ],
             "intelliSenseMode": "msvc-x64",
             "browse": {
                 "path": [
                     "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
-                    "${workspaceRoot}"
+                    "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
