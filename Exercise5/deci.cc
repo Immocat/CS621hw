@@ -117,7 +117,7 @@ void init()
             // iterate all neighbor faces
             Mesh::Point face_normal = mesh.normal(*vf_it);
             float d = -OpenMesh::dot(face_normal, v_p);
-            quadric(*v_it) = Quadricd(face_normal[0], face_normal[1], face_normal[2], d);
+            quadric(*v_it) += Quadricd(face_normal[0], face_normal[1], face_normal[2], d);
         }
     }
 }
@@ -154,7 +154,7 @@ is_collapse_legal(Mesh::HalfedgeHandle _hh)
     //   if normal vector of a (non-degenerate) triangle changes by 
     //   more than pi/4 degrees, return false.
     // ------------------------------------------------------------
-    static const float cos_piD4 = 0.70710678118;
+    static const float cos_piD4 = .70710678118;
     for(Mesh::VertexFaceIter v0f_it = mesh.vf_begin(v0); v0f_it.is_valid(); ++v0f_it){
         if((*v0f_it).idx() == fl.idx() || (*v0f_it).idx() == fr.idx())
             continue;
@@ -263,6 +263,7 @@ void  decimate(unsigned int _n_vertices)
 
     while (nv > _n_vertices && !queue.empty())
     {
+        printf("nv %d, qsize %d\n",nv,queue.size());
         // Exercise 5.4 ----------------------------------------------
         // INSERT CODE:
         // Decimate using priority queue:
@@ -288,6 +289,7 @@ void  decimate(unsigned int _n_vertices)
             enqueue_vertex(vh);
         }
         --nv;
+        
     }
 
     // clean up
